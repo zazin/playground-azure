@@ -1401,7 +1401,7 @@ function updateCustomScopes() {
     }
 }
 
-function authorizeAPIs() {
+window.authorizeAPIs = function() {
     const clientId = document.getElementById('clientId').value;
     const clientSecret = document.getElementById('clientSecret').value;
     const tenantId = document.getElementById('tenantId').value;
@@ -2291,12 +2291,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const groupCheckboxes = document.querySelectorAll('.scope-group-checkbox');
     groupCheckboxes.forEach(checkbox => {
         checkbox.addEventListener('change', () => toggleScopeGroup(checkbox.id));
-    });
-    
-    // Add event listeners for individual scope checkboxes
-    const scopeCheckboxes = document.querySelectorAll('.scope-checkbox');
-    scopeCheckboxes.forEach(checkbox => {
-        checkbox.addEventListener('change', () => updateCustomScopes());
     });
     
     // Set default request URI

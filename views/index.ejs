@@ -123,28 +123,28 @@
                     If you have an authorization code, you can exchange it for an access token.
                 </p>
                 
-                <% if (tokens && tokens.length > 0) { %>
+                <% if (currentToken) { %>
                     <div class="token-info">
                         <div class="token-field">
                             <label class="form-label">Access Token</label>
                             <div class="token-display">
-                                <input type="text" class="form-control" value="<%= tokens[0].access_token %>" readonly style="font-size: 11px;">
-                                <button class="btn btn-sm btn-outline-secondary" onclick="copyToken('<%= tokens[0].access_token %>')">
+                                <input type="text" class="form-control" value="<%= currentToken.access_token %>" readonly style="font-size: 11px;">
+                                <button class="btn btn-sm btn-outline-secondary" onclick="copyToken('<%= currentToken.access_token %>')">
                                     <i class="bi bi-clipboard"></i>
                                 </button>
                             </div>
-                            <div class="token-expiration" id="tokenExpiration" data-expires="<%= tokens[0].expires_at %>">
+                            <div class="token-expiration" id="tokenExpiration" data-expires="<%= currentToken.expires_at %>">
                                 <small class="text-muted">
                                     <i class="bi bi-clock"></i> <span id="expirationText">Calculating...</span>
                                 </small>
                             </div>
                         </div>
-                        <% if (tokens[0].refresh_token) { %>
+                        <% if (currentToken.refresh_token) { %>
                         <div class="token-field mt-3">
                             <label class="form-label">Refresh Token</label>
                             <div class="token-display">
-                                <input type="text" class="form-control" value="<%= tokens[0].refresh_token %>" readonly style="font-size: 11px;">
-                                <button class="btn btn-sm btn-outline-secondary" onclick="copyToken('<%= tokens[0].refresh_token %>')">
+                                <input type="text" class="form-control" value="<%= currentToken.refresh_token %>" readonly style="font-size: 11px;">
+                                <button class="btn btn-sm btn-outline-secondary" onclick="copyToken('<%= currentToken.refresh_token %>')">
                                     <i class="bi bi-clipboard"></i>
                                 </button>
                             </div>
@@ -154,10 +154,10 @@
                         </div>
                         <% } %>
                         <div class="token-actions mt-3">
-                            <button class="btn btn-outline-primary btn-sm" onclick="refreshToken(<%= tokens[0].id %>)" <%= !tokens[0].refresh_token ? 'disabled title="No refresh token available"' : '' %>>
+                            <button class="btn btn-outline-primary btn-sm" onclick="refreshToken(<%= currentToken.id %>)" <%= !currentToken.refresh_token ? 'disabled title="No refresh token available"' : '' %>>
                                 <i class="bi bi-arrow-clockwise"></i> Use Refresh Token
                             </button>
-                            <button class="btn btn-outline-danger btn-sm" onclick="revokeToken(<%= tokens[0].id %>)">
+                            <button class="btn btn-outline-danger btn-sm" onclick="revokeToken(<%= currentToken.id %>)">
                                 <i class="bi bi-x-circle"></i> Revoke token
                             </button>
                         </div>
@@ -172,7 +172,7 @@
 
         <!-- Step 3: Configure request to API -->
         <div class="step-section" id="step3">
-            <div class="step-header <%= (tokens && tokens.length > 0) ? '' : 'disabled' %>" onclick="<%= (tokens && tokens.length > 0) ? 'toggleStep(3)' : '' %>">
+            <div class="step-header <%= currentToken ? '' : 'disabled' %>" onclick="<%= currentToken ? 'toggleStep(3)' : '' %>">
                 <span class="step-toggle">▶</span>
                 <strong>Step 3</strong> Configure request to API
             </div>

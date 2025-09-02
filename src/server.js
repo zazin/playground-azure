@@ -52,8 +52,8 @@ app.use(express.static(join(dirname(__dirname), 'public')));
 app.get('/', async (req, res) => {
   try {
     const allTokens = await storage.getActiveTokens();
-    // Only use the first (most recent) token for single token mode
-    const tokens = allTokens.length > 0 ? [allTokens[0]] : [];
+    // Since we only store one token now, get it directly
+    const currentToken = allTokens.length > 0 ? allTokens[0] : null;
     const stats = await storage.getTokenStatistics();
     const config = await storage.getConfiguration();
     
@@ -64,10 +64,10 @@ app.get('/', async (req, res) => {
       delete req.session.originalTokenResponse;
     }
     
-    res.render('index', { tokens, stats, config, originalTokenResponse });
+    res.render('index', { currentToken, stats, config, originalTokenResponse });
   } catch (error) {
     console.error('Error loading dashboard:', error);
-    res.render('index', { tokens: [], stats: {}, config: {}, error: error.message, originalTokenResponse: null });
+    res.render('index', { currentToken: null, stats: {}, config: {}, error: error.message, originalTokenResponse: null });
   }
 });
 
@@ -400,8 +400,7 @@ app.post('/api/token/:id/refresh', async (req, res) => {
           userId: existingToken.user_id || 'unknown'
         };
 
-        // Save as new token and mark old one as refreshed
-        await storage.updateTokenStatus(req.params.id, 'refreshed');
+        // Replace the existing token with the refreshed one
         const newToken = await storage.saveToken(updatedTokenInfo);
         
         console.log('✅ Token refreshed successfully using grant_type=refresh_token');

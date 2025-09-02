@@ -10,7 +10,6 @@ const __dirname = dirname(__filename);
 class Storage {
   constructor() {
     this.tokens = [];
-    this.tokenIdCounter = 1;
     this.tokenUsage = [];
     
     // File paths
@@ -78,9 +77,14 @@ class Storage {
       if (fs.existsSync(this.tokensFile)) {
         const data = fs.readFileSync(this.tokensFile, 'utf8');
         const savedData = JSON.parse(data);
-        this.tokens = savedData.tokens || [];
-        this.tokenIdCounter = savedData.tokenIdCounter || 1;
-        console.log(`✅ Loaded ${this.tokens.length} tokens from file`);
+        // Keep only the most recent token
+        if (savedData.tokens && savedData.tokens.length > 0) {
+          this.tokens = [savedData.tokens[savedData.tokens.length - 1]];
+          this.tokens[0].id = 1; // Ensure ID is always 1
+        } else {
+          this.tokens = [];
+        }
+        console.log(`✅ Loaded ${this.tokens.length} token from file`);
       }
     } catch (error) {
       console.warn('⚠️ Could not load tokens file:', error.message);
@@ -90,8 +94,7 @@ class Storage {
   saveTokensToFile() {
     try {
       const tokensData = {
-        tokens: this.tokens,
-        tokenIdCounter: this.tokenIdCounter
+        tokens: this.tokens
       };
       fs.writeFileSync(this.tokensFile, JSON.stringify(tokensData, null, 2), 'utf8');
       console.log('✅ Tokens saved to file');
@@ -149,7 +152,7 @@ class Storage {
   // Token operations
   saveToken(tokenData) {
     const token = {
-      id: this.tokenIdCounter++,
+      id: 1, // Always use ID 1 since we only keep one token
       client_id: tokenData.clientId,
       tenant_id: tokenData.tenantId,
       access_token: tokenData.accessToken,
@@ -164,7 +167,8 @@ class Storage {
       status: 'active'
     };
     
-    this.tokens.push(token);
+    // Replace all tokens with the new one (keep only one token)
+    this.tokens = [token];
     this.saveTokensToFile();
     return Promise.resolve({ id: token.id });
   }
