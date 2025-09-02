@@ -61,14 +61,9 @@ app.get('/', async (req, res) => {
   }
 });
 
-app.get('/config', async (req, res) => {
-  try {
-    const config = await storage.getConfiguration();
-    res.render('config', { config });
-  } catch (error) {
-    console.error('Error loading configuration:', error);
-    res.render('config', { config: {}, error: error.message });
-  }
+// Redirect config page to main page since we're now single-page
+app.get('/config', (req, res) => {
+  res.redirect('/');
 });
 
 app.post('/api/config', async (req, res) => {
