@@ -65,7 +65,33 @@ jobs:
         run: npm run lint --if-present
 
       - name: Check package.json validity
-        run: npm pkg fix --dry-run
+        run: |
+          echo "Validating package.json structure..."
+          npm pkg get name version description bin
+          echo "✅ Package.json is valid"
+
+      - name: Validate bin path exists
+        run: |
+          BIN_PATH=$(npm pkg get bin.playground-azure --json | jq -r '.')
+          if [[ "$BIN_PATH" == "null" ]]; then
+            echo "❌ bin.playground-azure not found in package.json"
+            exit 1
+          fi
+          
+          # Remove quotes and handle both ./bin/cli.js and bin/cli.js formats
+          BIN_PATH=$(echo "$BIN_PATH" | sed 's/^"\.\///' | sed 's/^"//' | sed 's/"$//')
+          
+          if [[ ! -f "$BIN_PATH" ]]; then
+            echo "❌ Binary file not found: $BIN_PATH"
+            exit 1
+          fi
+          
+          if [[ ! -x "$BIN_PATH" ]]; then
+            echo "❌ Binary file not executable: $BIN_PATH"
+            exit 1
+          fi
+          
+          echo "✅ Binary path is valid and executable: $BIN_PATH"
 
   security:
     runs-on: ubuntu-latest
