@@ -54,6 +54,19 @@
                             </div>
                         </div>
                     </div>
+                
+                    <div class="scope-group">
+                        <div class="scope-group-header">
+                            <input type="checkbox" id="auth-apis" class="scope-group-checkbox">
+                            <label for="auth-apis"><strong>Authentication & Authorization</strong></label>
+                        </div>
+                        <div class="scope-items">
+                            <div class="scope-item">
+                                <input type="checkbox" id="offline-access" class="scope-checkbox" checked>
+                                <label for="offline-access">offline_access (Refresh Token)</label>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Custom Scopes Input -->
@@ -129,9 +142,23 @@
                                 </small>
                             </div>
                         </div>
-                        <div class="token-actions">
-                            <button class="btn btn-outline-primary btn-sm" onclick="refreshToken(<%= tokens[0].id %>)">
-                                <i class="bi bi-arrow-clockwise"></i> Refresh token
+                        <% if (tokens[0].refresh_token) { %>
+                        <div class="token-field mt-3">
+                            <label class="form-label">Refresh Token</label>
+                            <div class="token-display">
+                                <input type="text" class="form-control" value="<%= tokens[0].refresh_token %>" readonly style="font-size: 11px;">
+                                <button class="btn btn-sm btn-outline-secondary" onclick="copyToken('<%= tokens[0].refresh_token %>')">
+                                    <i class="bi bi-clipboard"></i>
+                                </button>
+                            </div>
+                            <small class="text-muted">
+                                <i class="bi bi-info-circle"></i> Use this token with grant_type=refresh_token to get new access tokens
+                            </small>
+                        </div>
+                        <% } %>
+                        <div class="token-actions mt-3">
+                            <button class="btn btn-outline-primary btn-sm" onclick="refreshToken(<%= tokens[0].id %>)" <%= !tokens[0].refresh_token ? 'disabled title="No refresh token available"' : '' %>>
+                                <i class="bi bi-arrow-clockwise"></i> Use Refresh Token
                             </button>
                             <button class="btn btn-outline-danger btn-sm" onclick="revokeToken(<%= tokens[0].id %>)">
                                 <i class="bi bi-x-circle"></i> Revoke token

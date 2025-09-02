@@ -153,6 +153,7 @@ class Storage {
       client_id: tokenData.clientId,
       tenant_id: tokenData.tenantId,
       access_token: tokenData.accessToken,
+      refresh_token: tokenData.refreshToken || null,
       token_type: tokenData.tokenType || 'Bearer',
       expires_at: tokenData.expiresAt,
       scopes: tokenData.scopes || [],

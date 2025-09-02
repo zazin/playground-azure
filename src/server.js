@@ -133,10 +133,12 @@ app.get('/api/auth/login', async (req, res) => {
     const redirectUri = config.redirectUri || `http://localhost:${PORT}/api/auth/callback`;
     
     // Use configured scopes plus essential identity scopes
-    const baseIdentityScopes = ['https://graph.microsoft.com/User.Read', 'openid', 'profile', 'email'];
+    // Include offline_access to get refresh token
+    const baseIdentityScopes = ['https://graph.microsoft.com/User.Read', 'openid', 'profile', 'email', 'offline_access'];
     const additionalScopes = config.scopes.filter(scope => 
         !baseIdentityScopes.includes(scope) && 
-        scope !== 'https://graph.microsoft.com/.default'
+        scope !== 'https://graph.microsoft.com/.default' &&
+        scope !== 'offline_access'
     );
     const userScopes = [...baseIdentityScopes, ...additionalScopes];
     
@@ -177,11 +179,12 @@ app.get('/api/auth/callback', async (req, res) => {
     const redirectUri = config.redirectUri || `http://localhost:${PORT}/api/auth/callback`;
     
     console.log('🔄 Exchanging authorization code for token...');
-    // Use same scope logic as login endpoint
-    const baseIdentityScopes = ['https://graph.microsoft.com/User.Read', 'openid', 'profile', 'email'];
+    // Use same scope logic as login endpoint (including offline_access for refresh token)
+    const baseIdentityScopes = ['https://graph.microsoft.com/User.Read', 'openid', 'profile', 'email', 'offline_access'];
     const additionalScopes = config.scopes.filter(scope => 
         !baseIdentityScopes.includes(scope) && 
-        scope !== 'https://graph.microsoft.com/.default'
+        scope !== 'https://graph.microsoft.com/.default' &&
+        scope !== 'offline_access'
     );
     const userScopes = [...baseIdentityScopes, ...additionalScopes];
     
@@ -197,6 +200,7 @@ app.get('/api/auth/callback', async (req, res) => {
         clientId: config.clientId,
         tenantId: config.tenantId,
         accessToken: response.accessToken,
+        refreshToken: response.refreshToken || null,
         tokenType: response.tokenType || 'Bearer',
         expiresAt: response.expiresOn.toISOString(),
         scopes: response.scopes,
@@ -209,6 +213,7 @@ app.get('/api/auth/callback', async (req, res) => {
       // Store the original response for display
       req.session.originalTokenResponse = {
         access_token: response.accessToken,
+        refresh_token: response.refreshToken || null,
         token_type: response.tokenType || 'Bearer',
         expires_in: Math.floor((response.expiresOn.getTime() - Date.now()) / 1000),
         expires_on: response.expiresOn.toISOString(),
@@ -222,6 +227,7 @@ app.get('/api/auth/callback', async (req, res) => {
           name: response.account?.name
         },
         flow_type: 'authorization_code',
+        grant_type: 'authorization_code',
         client_id: config.clientId
       };
       
@@ -327,6 +333,14 @@ app.post('/api/token/:id/refresh', async (req, res) => {
       });
     }
 
+    // Check if we have a refresh token
+    if (!existingToken.refresh_token) {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'No refresh token available. Please re-authenticate to get a new refresh token.' 
+      });
+    }
+
     try {
       const { ConfidentialClientApplication } = await import('@azure/msal-node');
       
@@ -340,14 +354,14 @@ app.post('/api/token/:id/refresh', async (req, res) => {
 
       const clientApp = new ConfidentialClientApplication(msalConfig);
       
-      // For Authorization Code flow, we need to get a new token by getting a fresh one
-      // In a real scenario with refresh tokens, you'd use acquireTokenSilent with the refresh token
-      // For this demo, we'll get a new token using client credentials
-      const clientCredentialRequest = {
-        scopes: config.scopes || ['https://graph.microsoft.com/.default'],
+      // Use refresh token to get new access token
+      const refreshTokenRequest = {
+        refreshToken: existingToken.refresh_token,
+        scopes: existingToken.scopes || ['https://graph.microsoft.com/User.Read', 'openid', 'profile', 'email', 'offline_access'],
       };
 
-      const response = await clientApp.acquireTokenByClientCredential(clientCredentialRequest);
+      console.log('🔄 Using refresh token to get new access token...');
+      const response = await clientApp.acquireTokenByRefreshToken(refreshTokenRequest);
       
       if (response) {
         // Update the token in storage with new values
@@ -355,11 +369,12 @@ app.post('/api/token/:id/refresh', async (req, res) => {
           clientId: config.clientId,
           tenantId: config.tenantId,
           accessToken: response.accessToken,
+          refreshToken: response.refreshToken || existingToken.refresh_token, // Keep existing if not provided
           tokenType: response.tokenType || 'Bearer',
           expiresAt: response.expiresOn.toISOString(),
-          scopes: config.scopes,
-          flowType: 'client_credentials_refresh',
-          userId: existingToken.user_id || 'system'
+          scopes: response.scopes || existingToken.scopes,
+          flowType: 'refresh_token',
+          userId: existingToken.user_id || response.account?.homeAccountId || 'unknown'
         };
 
         // Save as new token and mark old one as refreshed

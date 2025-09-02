@@ -1385,7 +1385,8 @@ function updateCustomScopes() {
             'Calendars.Read': 'https://graph.microsoft.com/Calendars.Read',
             'Calendars.ReadWrite': 'https://graph.microsoft.com/Calendars.ReadWrite',
             'Chat.Read': 'https://graph.microsoft.com/Chat.Read',
-            'Chat.ReadWrite': 'https://graph.microsoft.com/Chat.ReadWrite'
+            'Chat.ReadWrite': 'https://graph.microsoft.com/Chat.ReadWrite',
+            'offline_access (Refresh Token)': 'offline_access'
         };
         
         if (scopeMap[label]) {
