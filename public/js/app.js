@@ -560,34 +560,6 @@ async function revokeToken(tokenId) {
     }
 }
 
-async function refreshToken(tokenId) {
-    if (!confirm('Are you sure you want to refresh this token? This will generate a new access token.')) {
-        return;
-    }
-    
-    // Show loading state
-    const refreshBtn = event.target.closest('button');
-    const originalText = refreshBtn.innerHTML;
-    refreshBtn.innerHTML = '<i class="bi bi-arrow-clockwise spin"></i> Refreshing...';
-    refreshBtn.disabled = true;
-    
-    try {
-        const response = await axios.post(`/api/token/${tokenId}/refresh`);
-        
-        if (response.data.success) {
-            showToast('✅ Token refreshed successfully', 'success');
-            setTimeout(() => location.reload(), 1000);
-        } else {
-            showToast('❌ Failed to refresh token: ' + (response.data.error || 'Unknown error'), 'danger');
-        }
-    } catch (error) {
-        showToast('❌ Error refreshing token: ' + error.message, 'danger');
-    } finally {
-        // Restore button state
-        refreshBtn.innerHTML = originalText;
-        refreshBtn.disabled = false;
-    }
-}
 
 async function viewUsage(tokenId) {
     const modal = new bootstrap.Modal(document.getElementById('usageModal'));
@@ -1112,8 +1084,11 @@ async function sendApiRequest(event) {
                                     <button class="btn btn-sm btn-outline-secondary me-1" onclick="collapseAllJson()">
                                         <i class="bi bi-chevron-double-up"></i> Collapse All
                                     </button>
-                                    <button class="btn btn-sm btn-outline-primary" onclick="copyFullResponse()">
-                                        <i class="bi bi-clipboard"></i> Copy Full Response
+                                    <button class="btn btn-sm btn-outline-primary me-1" onclick="copyFullResponse()">
+                                        <i class="bi bi-clipboard"></i> Copy All JSON
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-info" onclick="copyFormattedResponse()">
+                                        <i class="bi bi-clipboard-data"></i> Copy Pretty JSON
                                     </button>
                                 </div>
                                 <div class="bg-light p-2 response-body" style="max-height: 400px; overflow-y: auto;">
@@ -1173,7 +1148,15 @@ function copyResponse(encodedData) {
 
 // JSON Viewer helper functions
 function expandAllJson() {
+    // Expand main response viewer
     $('#responseJsonViewer').find('.json-toggle').each(function() {
+        if ($(this).hasClass('collapsed')) {
+            $(this).click();
+        }
+    });
+    
+    // Expand simple response viewer
+    $('#responseJsonViewerSimple').find('.json-toggle').each(function() {
         if ($(this).hasClass('collapsed')) {
             $(this).click();
         }
@@ -1181,7 +1164,15 @@ function expandAllJson() {
 }
 
 function collapseAllJson() {
+    // Collapse main response viewer
     $('#responseJsonViewer').find('.json-toggle').each(function() {
+        if (!$(this).hasClass('collapsed')) {
+            $(this).click();
+        }
+    });
+    
+    // Collapse simple response viewer
+    $('#responseJsonViewerSimple').find('.json-toggle').each(function() {
         if (!$(this).hasClass('collapsed')) {
             $(this).click();
         }
@@ -1190,11 +1181,22 @@ function collapseAllJson() {
 
 function copyFullResponse() {
     if (window.currentApiResponse) {
-        const jsonStr = JSON.stringify(window.currentApiResponse, null, 2);
+        const jsonStr = JSON.stringify(window.currentApiResponse);
         navigator.clipboard.writeText(jsonStr).then(() => {
-            showToast('✅ Full response copied to clipboard', 'success');
+            showToast('✅ Full response copied to clipboard (minified)', 'success');
         }).catch(err => {
             showToast('❌ Failed to copy response', 'danger');
+        });
+    }
+}
+
+function copyFormattedResponse() {
+    if (window.currentApiResponse) {
+        const jsonStr = JSON.stringify(window.currentApiResponse, null, 2);
+        navigator.clipboard.writeText(jsonStr).then(() => {
+            showToast('✅ Pretty JSON copied to clipboard (formatted)', 'success');
+        }).catch(err => {
+            showToast('❌ Failed to copy formatted response', 'danger');
         });
     }
 }
@@ -1225,14 +1227,22 @@ function addCopyButtonsToJsonViewer() {
         let key = $elem.text().replace(/^"|"$/g, '').replace(/:$/, '');
         
         // Create copy button for key
-        const $copyBtn = $('<button class="btn btn-link btn-sm copy-btn-key p-0 ms-1" title="Copy key" style="font-size: 0.7rem; opacity: 0.6; color: #6c757d;">');
+        const $copyBtn = $('<button class="btn btn-link btn-sm copy-btn-key p-0 ms-1" title="Copy key" style="font-size: 0.8rem; opacity: 0.7; color: #007bff; background: rgba(0,123,255,0.1); border-radius: 3px; padding: 1px 3px!important;">');
         $copyBtn.html('<i class="bi bi-clipboard"></i>');
         
         // Add hover effects
         $copyBtn.on('mouseenter', function() {
-            $(this).css('opacity', '1');
+            $(this).css({
+                'opacity': '1',
+                'background': 'rgba(0,123,255,0.2)',
+                'color': '#0056b3'
+            });
         }).on('mouseleave', function() {
-            $(this).css('opacity', '0.6');
+            $(this).css({
+                'opacity': '0.7',
+                'background': 'rgba(0,123,255,0.1)',
+                'color': '#007bff'
+            });
         });
         
         $copyBtn.on('click', function(e) {
@@ -1275,14 +1285,22 @@ function addCopyButtonsToJsonViewer() {
         }
         
         // Create copy button with better styling
-        const $copyBtn = $('<button class="btn btn-link btn-sm copy-btn p-0 ms-1" title="Copy value" style="font-size: 0.7rem; opacity: 0.6; color: #6c757d;">');
+        const $copyBtn = $('<button class="btn btn-link btn-sm copy-btn p-0 ms-1" title="Copy value" style="font-size: 0.8rem; opacity: 0.7; color: #28a745; background: rgba(40,167,69,0.1); border-radius: 3px; padding: 1px 3px!important;">');
         $copyBtn.html('<i class="bi bi-clipboard"></i>');
         
         // Add hover effects
         $copyBtn.on('mouseenter', function() {
-            $(this).css('opacity', '1');
+            $(this).css({
+                'opacity': '1',
+                'background': 'rgba(40,167,69,0.2)',
+                'color': '#1e7e34'
+            });
         }).on('mouseleave', function() {
-            $(this).css('opacity', '0.6');
+            $(this).css({
+                'opacity': '0.7',
+                'background': 'rgba(40,167,69,0.1)',
+                'color': '#28a745'
+            });
         });
         
         $copyBtn.on('click', function(e) {
@@ -1304,29 +1322,720 @@ function addCopyButtonsToJsonViewer() {
     });
 }
 
-// Initialize event listeners
-document.addEventListener('DOMContentLoaded', () => {
+// Google OAuth Playground Interface Functions
+function toggleStep(stepNumber) {
+    const stepSection = document.querySelector(`#step${stepNumber}`);
+    if (!stepSection) return;
     
-    const configForm = document.getElementById('configForm');
-    if (configForm) {
-        configForm.addEventListener('submit', saveConfiguration);
-        loadConfigurationScopes();
+    const stepHeader = stepSection.querySelector('.step-header');
+    const stepContent = stepSection.querySelector('.step-content');
+    const toggle = stepHeader.querySelector('.step-toggle');
+    
+    // Check if step is disabled
+    if (stepHeader.classList.contains('disabled')) {
+        return;
+    }
+    
+    const isCurrentlyHidden = stepContent.style.display === 'none' || 
+                              window.getComputedStyle(stepContent).display === 'none';
+    
+    // Close all other steps first (accordion behavior)
+    const allSteps = document.querySelectorAll('.step-section');
+    allSteps.forEach(step => {
+        if (step.id !== `step${stepNumber}`) {
+            const content = step.querySelector('.step-content');
+            const stepToggle = step.querySelector('.step-toggle');
+            if (content && stepToggle) {
+                content.style.display = 'none';
+                stepToggle.textContent = '▶';
+            }
+        }
+    });
+    
+    // Toggle the clicked step
+    if (isCurrentlyHidden) {
+        stepContent.style.display = 'block';
+        toggle.textContent = '▼';
+    } else {
+        stepContent.style.display = 'none';
+        toggle.textContent = '▶';
+    }
+}
+
+function toggleScopeGroup(groupId) {
+    const checkbox = document.getElementById(groupId);
+    const scopeItems = checkbox.closest('.scope-group').querySelectorAll('.scope-checkbox');
+    
+    scopeItems.forEach(item => {
+        item.checked = checkbox.checked;
+    });
+    
+    updateCustomScopes();
+}
+
+function updateCustomScopes() {
+    const selectedScopes = [];
+    const scopeCheckboxes = document.querySelectorAll('.scope-checkbox:checked');
+    
+    scopeCheckboxes.forEach(checkbox => {
+        const label = checkbox.nextElementSibling.textContent.trim();
+        // Convert UI labels to actual Microsoft Graph scopes
+        const scopeMap = {
+            'User.Read': 'https://graph.microsoft.com/User.Read',
+            'Calendars.Read': 'https://graph.microsoft.com/Calendars.Read',
+            'Calendars.ReadWrite': 'https://graph.microsoft.com/Calendars.ReadWrite',
+            'Chat.Read': 'https://graph.microsoft.com/Chat.Read',
+            'Chat.ReadWrite': 'https://graph.microsoft.com/Chat.ReadWrite'
+        };
         
-        // Handle Enter key in new scope input
-        const newScopeInput = document.getElementById('newScopeInput');
-        if (newScopeInput) {
-            newScopeInput.addEventListener('keypress', function(e) {
-                if (e.key === 'Enter') {
-                    e.preventDefault();
-                    addScope();
+        if (scopeMap[label]) {
+            selectedScopes.push(scopeMap[label]);
+        }
+    });
+    
+    // Update custom scopes input
+    const customScopesInput = document.getElementById('customScopes');
+    if (customScopesInput) {
+        customScopesInput.value = selectedScopes.length > 0 ? selectedScopes.join(' ') : '';
+    }
+}
+
+function authorizeAPIs() {
+    const clientId = document.getElementById('clientId').value;
+    const clientSecret = document.getElementById('clientSecret').value;
+    const tenantId = document.getElementById('tenantId').value;
+    const redirectUri = document.getElementById('redirectUri').value;
+    const customScopes = document.getElementById('customScopes').value;
+    
+    if (!clientId || !clientSecret || !tenantId) {
+        showToast('❌ Please fill in all required configuration fields first', 'danger');
+        return;
+    }
+    
+    if (!redirectUri) {
+        showToast('❌ Please provide a redirect URI', 'danger');
+        return;
+    }
+    
+    // Save configuration with selected scopes (use default if empty)
+    const scopeList = customScopes ? customScopes.split(' ').filter(s => s.trim()) : [];
+    const scopes = scopeList.length > 0 ? scopeList : ['https://graph.microsoft.com/.default'];
+    
+    const configData = {
+        clientId,
+        clientSecret,
+        tenantId,
+        authority: '',
+        redirectUri,
+        scopes
+    };
+    
+    // Show loading state
+    const authorizeBtn = document.querySelector('.authorize-btn');
+    const originalBtnText = authorizeBtn.innerHTML;
+    authorizeBtn.innerHTML = '<i class="bi bi-hourglass-split"></i> Saving configuration...';
+    authorizeBtn.disabled = true;
+    
+    // Save configuration to storage first
+    axios.post('/api/config', configData)
+        .then(response => {
+            if (response.data.success) {
+                console.log('✅ Configuration saved to storage:', configData);
+                showToast(`✅ Configuration saved: Client ID, Tenant ID, Redirect URI, and ${scopes.length} scope(s)`, 'success');
+                
+                // Update button to show redirect state
+                authorizeBtn.innerHTML = '<i class="bi bi-shield-check"></i> Redirecting to Azure AD...';
+                
+                // Small delay to show the success message, then redirect
+                setTimeout(() => {
+                    console.log('🔄 Redirecting to OAuth authorization flow...');
+                    window.location.href = '/api/auth/login';
+                }, 1500);
+            } else {
+                throw new Error(response.data.error || 'Failed to save configuration');
+            }
+        })
+        .catch(error => {
+            console.error('Configuration save error:', error);
+            showToast('❌ Error saving configuration: ' + (error.response?.data?.error || error.message), 'danger');
+            
+            // Restore button state on error
+            authorizeBtn.innerHTML = originalBtnText;
+            authorizeBtn.disabled = false;
+        });
+}
+
+function refreshToken(tokenId) {
+    if (!confirm('Refresh token? This will generate a new access token.')) {
+        return;
+    }
+    
+    const btn = event.target.closest('button');
+    const originalText = btn.innerHTML;
+    btn.innerHTML = '<i class="bi bi-arrow-clockwise spin"></i> Refreshing...';
+    btn.disabled = true;
+    
+    console.log('🔄 Refreshing token with ID:', tokenId);
+    
+    axios.post(`/api/token/${tokenId}/refresh`)
+        .then(response => {
+            console.log('✅ Refresh response:', response.data);
+            if (response.data.success) {
+                showToast('✅ Token refreshed successfully', 'success');
+                setTimeout(() => location.reload(), 1500);
+            } else {
+                throw new Error(response.data.error || 'Unknown refresh error');
+            }
+        })
+        .catch(error => {
+            console.error('❌ Refresh error:', error);
+            const errorMessage = error.response?.data?.error || error.message;
+            showToast('❌ Refresh failed: ' + errorMessage, 'danger');
+            
+            // Restore button state on error
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+        });
+}
+
+function revokeToken(tokenId) {
+    if (!confirm('Revoke this token? This action cannot be undone.')) {
+        return;
+    }
+    
+    const btn = event.target.closest('button');
+    const originalText = btn.innerHTML;
+    btn.innerHTML = '<i class="bi bi-x-circle"></i> Revoking...';
+    btn.disabled = true;
+    
+    axios.post(`/api/token/${tokenId}/revoke`)
+        .then(response => {
+            if (response.data.success) {
+                showToast('✅ Token revoked successfully', 'success');
+                setTimeout(() => location.reload(), 1000);
+            } else {
+                showToast('❌ Failed to revoke: ' + response.data.error, 'danger');
+            }
+        })
+        .catch(error => {
+            showToast('❌ Revoke error: ' + error.message, 'danger');
+        })
+        .finally(() => {
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+        });
+}
+
+function copyToken(token) {
+    navigator.clipboard.writeText(token)
+        .then(() => showToast('✅ Token copied to clipboard', 'success'))
+        .catch(() => showToast('❌ Failed to copy token', 'danger'));
+}
+
+function loadSelectedAPI() {
+    const selector = document.getElementById('apiSelector');
+    const selectedValue = selector.value;
+    
+    if (!selectedValue) return;
+    
+    // API configurations mapped to selector values
+    const apiConfigs = {
+        // Profile APIs
+        'profile-me': {
+            method: 'GET',
+            uri: '/me',
+            body: ''
+        },
+        'profile-photo': {
+            method: 'GET', 
+            uri: '/me/photo/$value',
+            body: ''
+        },
+        'profile-update': {
+            method: 'PATCH',
+            uri: '/me',
+            body: JSON.stringify({
+                displayName: "Updated Name",
+                jobTitle: "Software Developer"
+            }, null, 2)
+        },
+        
+        // Calendar APIs
+        'calendar-main': {
+            method: 'GET',
+            uri: '/me/calendar',
+            body: ''
+        },
+        'calendar-events': {
+            method: 'GET',
+            uri: '/me/events?$top=10&$orderby=start/dateTime',
+            body: ''
+        },
+        'calendar-today': {
+            method: 'GET',
+            uri: `/me/calendarView?startDateTime=${new Date().toISOString().split('T')[0]}T00:00:00&endDateTime=${new Date(Date.now() + 86400000).toISOString().split('T')[0]}T00:00:00`,
+            body: ''
+        },
+        'calendar-week': {
+            method: 'GET',
+            uri: '/me/events?$top=20&$orderby=start/dateTime',
+            body: ''
+        },
+        'calendar-month': {
+            method: 'GET',
+            uri: '/me/events?$top=50&$orderby=start/dateTime',
+            body: ''
+        },
+        'calendar-create': {
+            method: 'POST',
+            uri: '/me/events',
+            body: JSON.stringify({
+                subject: "Test Meeting",
+                start: {
+                    dateTime: new Date(Date.now() + 86400000).toISOString().split('.')[0],
+                    timeZone: "UTC"
+                },
+                end: {
+                    dateTime: new Date(Date.now() + 86400000 + 3600000).toISOString().split('.')[0],
+                    timeZone: "UTC"
+                },
+                body: {
+                    contentType: "HTML",
+                    content: "Test meeting created via API"
                 }
-            });
+            }, null, 2)
+        },
+        
+        // Teams APIs
+        'teams-joined': {
+            method: 'GET',
+            uri: '/me/joinedTeams',
+            body: ''
+        },
+        'teams-channels': {
+            method: 'GET',
+            uri: '/teams/{team-id}/channels',
+            body: ''
+        },
+        'teams-messages': {
+            method: 'GET',
+            uri: '/teams/{team-id}/channels/{channel-id}/messages?$top=10',
+            body: ''
+        },
+        
+        // Chat APIs
+        'chat-list': {
+            method: 'GET',
+            uri: '/me/chats?$top=20',
+            body: ''
+        },
+        'chat-group': {
+            method: 'GET',
+            uri: '/me/chats?$filter=chatType eq \'group\'&$top=20',
+            body: ''
+        },
+        'chat-oneone': {
+            method: 'GET',
+            uri: '/me/chats?$filter=chatType eq \'oneOnOne\'&$top=20',
+            body: ''
+        },
+        'chat-messages': {
+            method: 'GET',
+            uri: '/me/chats/{chat-id}/messages?$top=10',
+            body: ''
+        },
+        'chat-send': {
+            method: 'POST',
+            uri: '/me/chats/{chat-id}/messages',
+            body: JSON.stringify({
+                body: {
+                    contentType: "text",
+                    content: "Hello from Graph API!"
+                }
+            }, null, 2)
+        }
+    };
+    
+    const config = apiConfigs[selectedValue];
+    if (config) {
+        document.getElementById('httpMethod').value = config.method;
+        document.getElementById('requestUri').value = config.uri;
+        document.getElementById('requestBody').value = config.body;
+        
+        showToast('✅ API template loaded: ' + selector.options[selector.selectedIndex].text, 'success');
+    }
+}
+
+function sendAPIRequest() {
+    const httpMethod = document.getElementById('httpMethod').value;
+    const requestUri = document.getElementById('requestUri').value;
+    const requestBody = document.getElementById('requestBody').value;
+    
+    // Get access token from the page (single token support)
+    const tokenInput = document.querySelector('input[readonly]');
+    if (!tokenInput || !tokenInput.value) {
+        showToast('❌ No access token available. Please authorize first.', 'danger');
+        return;
+    }
+    
+    const token = tokenInput.value.replace('...', '').trim();
+    const fullUrl = 'https://graph.microsoft.com/v1.0' + requestUri;
+    
+    const requestData = {
+        method: httpMethod,
+        url: fullUrl,
+        headers: {},
+        token: token
+    };
+    
+    if (['POST', 'PATCH', 'PUT'].includes(httpMethod) && requestBody) {
+        try {
+            requestData.body = JSON.parse(requestBody);
+        } catch (e) {
+            showToast('❌ Invalid JSON in request body', 'danger');
+            return;
         }
     }
     
-    const apiTestForm = document.getElementById('apiTestForm');
-    if (apiTestForm) {
-        apiTestForm.addEventListener('submit', sendApiRequest);
-        initializeApiTesting();
+    // Update request/response panel
+    const requestResponse = document.getElementById('requestResponse');
+    requestResponse.innerHTML = '<div class="spinner-border text-primary" role="status"></div> Sending request...';
+    
+    axios.post('/api/test-request', requestData)
+        .then(response => {
+            if (response.data.success) {
+                const apiResponse = response.data.response;
+                displayApiResponse(httpMethod, fullUrl, apiResponse);
+            }
+        })
+        .catch(error => {
+            requestResponse.innerHTML = `
+                <div class="alert alert-danger">
+                    <h6>❌ Request Failed</h6>
+                    <p>${error.response?.data?.error || error.message}</p>
+                </div>
+            `;
+        });
+}
+
+function displayApiResponse(method, url, response) {
+    const isError = response.error || response.status >= 400;
+    const requestResponse = document.getElementById('requestResponse');
+    
+    const html = `
+        <div class="api-response" style="width: 100%; max-width: 100%; margin: 0; box-sizing: border-box; overflow: hidden;">
+            <div class="response-header" style="margin-bottom: 15px; width: 100%; overflow: hidden;">
+                <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; width: 100%;">
+                    <div style="display: flex; align-items: center; gap: 10px; min-width: 0; flex: 1;">
+                        <span class="api-method-badge api-method-${method.toLowerCase()}">${method}</span>
+                        <span style="font-family: monospace; font-size: 13px; word-break: break-all; overflow: hidden; text-overflow: ellipsis;">${url}</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 10px; flex-shrink: 0;">
+                        <span class="response-status ${isError ? 'error' : 'success'}">
+                            ${response.status} ${response.statusText}
+                        </span>
+                        <small class="text-muted">${response.responseTime}ms</small>
+                    </div>
+                </div>
+            </div>
+            <div class="mb-2">
+                <button class="btn btn-sm btn-outline-secondary me-1" onclick="expandAllJson()">
+                    <i class="bi bi-chevron-double-down"></i> Expand All
+                </button>
+                <button class="btn btn-sm btn-outline-secondary me-1" onclick="collapseAllJson()">
+                    <i class="bi bi-chevron-double-up"></i> Collapse All
+                </button>
+                <button class="btn btn-sm btn-outline-primary me-1" onclick="copyFullResponseSimple()">
+                    <i class="bi bi-clipboard"></i> Copy All JSON
+                </button>
+                <button class="btn btn-sm btn-outline-info" onclick="copyFormattedResponseSimple()">
+                    <i class="bi bi-clipboard-data"></i> Copy Pretty JSON
+                </button>
+            </div>
+            <div class="bg-light p-2 response-body" style="max-height: 400px; overflow-y: auto;">
+                <div id="responseJsonViewerSimple"></div>
+            </div>
+        </div>
+    `;
+    
+    requestResponse.innerHTML = html;
+    
+    // Initialize JSON viewer after DOM is updated
+    setTimeout(() => {
+        window.currentSimpleApiResponse = response.data;
+        $('#responseJsonViewerSimple').jsonViewer(response.data, {
+            collapsed: false,
+            rootCollapsable: false,
+            withQuotes: true,
+            withLinks: true
+        });
+        
+        // Add copy buttons to each value
+        addCopyButtonsToSimpleJsonViewer();
+    }, 100);
+}
+
+// Simple JSON viewer functions for Step 3 response
+function copyFullResponseSimple() {
+    if (window.currentSimpleApiResponse) {
+        const jsonStr = JSON.stringify(window.currentSimpleApiResponse);
+        navigator.clipboard.writeText(jsonStr).then(() => {
+            showToast('✅ Full response copied to clipboard (minified)', 'success');
+        }).catch(err => {
+            showToast('❌ Failed to copy response', 'danger');
+        });
+    }
+}
+
+function copyFormattedResponseSimple() {
+    if (window.currentSimpleApiResponse) {
+        const jsonStr = JSON.stringify(window.currentSimpleApiResponse, null, 2);
+        navigator.clipboard.writeText(jsonStr).then(() => {
+            showToast('✅ Pretty JSON copied to clipboard (formatted)', 'success');
+        }).catch(err => {
+            showToast('❌ Failed to copy formatted response', 'danger');
+        });
+    }
+}
+
+function addCopyButtonsToSimpleJsonViewer() {
+    // Add copy buttons to keys in the simple JSON viewer
+    $('#responseJsonViewerSimple').find('.json-key').each(function() {
+        const $elem = $(this);
+        
+        // Skip if already has a copy button
+        if ($elem.next('.copy-btn-key').length > 0) {
+            return;
+        }
+        
+        // Get key without quotes
+        let key = $elem.text().replace(/^"|"$/g, '').replace(/:$/, '');
+        
+        // Create copy button for key
+        const $copyBtn = $('<button class="btn btn-link btn-sm copy-btn-key p-0 ms-1" title="Copy key" style="font-size: 0.8rem; opacity: 0.7; color: #007bff; background: rgba(0,123,255,0.1); border-radius: 3px; padding: 1px 3px!important;">');
+        $copyBtn.html('<i class="bi bi-clipboard"></i>');
+        
+        // Add hover effects
+        $copyBtn.on('mouseenter', function() {
+            $(this).css({
+                'opacity': '1',
+                'background': 'rgba(0,123,255,0.2)',
+                'color': '#0056b3'
+            });
+        }).on('mouseleave', function() {
+            $(this).css({
+                'opacity': '0.7',
+                'background': 'rgba(0,123,255,0.1)',
+                'color': '#007bff'
+            });
+        });
+        
+        $copyBtn.on('click', function(e) {
+            e.stopPropagation();
+            navigator.clipboard.writeText(key).then(() => {
+                showToast(`✅ Copied key: ${key}`, 'success');
+            }).catch(err => {
+                showToast('❌ Failed to copy key', 'danger');
+            });
+            
+            // Visual feedback
+            const $icon = $(this).find('i');
+            const originalIcon = $icon.attr('class');
+            $icon.attr('class', 'bi bi-check text-success');
+            
+            setTimeout(() => {
+                $icon.attr('class', originalIcon);
+            }, 1000);
+        });
+        
+        // Insert button after the key
+        $elem.after($copyBtn);
+    });
+    
+    // Add copy buttons to primitive values in the simple JSON viewer
+    $('#responseJsonViewerSimple').find('.json-string, .json-literal').each(function() {
+        const $elem = $(this);
+        
+        // Skip if already has a copy button
+        if ($elem.next('.copy-btn').length > 0) {
+            return;
+        }
+        
+        let value = $elem.text();
+        
+        // Handle different value types
+        if ($elem.hasClass('json-string')) {
+            // Remove surrounding quotes from strings
+            value = value.replace(/^"|"$/g, '');
+        }
+        
+        // Create copy button with better styling
+        const $copyBtn = $('<button class="btn btn-link btn-sm copy-btn p-0 ms-1" title="Copy value" style="font-size: 0.8rem; opacity: 0.7; color: #28a745; background: rgba(40,167,69,0.1); border-radius: 3px; padding: 1px 3px!important;">');
+        $copyBtn.html('<i class="bi bi-clipboard"></i>');
+        
+        // Add hover effects
+        $copyBtn.on('mouseenter', function() {
+            $(this).css({
+                'opacity': '1',
+                'background': 'rgba(40,167,69,0.2)',
+                'color': '#1e7e34'
+            });
+        }).on('mouseleave', function() {
+            $(this).css({
+                'opacity': '0.7',
+                'background': 'rgba(40,167,69,0.1)',
+                'color': '#28a745'
+            });
+        });
+        
+        $copyBtn.on('click', function(e) {
+            e.stopPropagation();
+            copyPropertyValue(value);
+            
+            // Visual feedback
+            const $icon = $(this).find('i');
+            const originalIcon = $icon.attr('class');
+            $icon.attr('class', 'bi bi-check text-success');
+            
+            setTimeout(() => {
+                $icon.attr('class', originalIcon);
+            }, 1000);
+        });
+        
+        // Insert button after the value
+        $elem.after($copyBtn);
+    });
+}
+
+// Load saved configuration and check appropriate scope checkboxes
+function loadSavedConfiguration() {
+    const customScopesInput = document.getElementById('customScopes');
+    console.log('📋 Loading saved configuration...');
+    console.log('Custom scopes input value:', customScopesInput ? customScopesInput.value : 'not found');
+    
+    if (customScopesInput && customScopesInput.value) {
+        const savedScopes = customScopesInput.value.split(' ');
+        console.log('🔍 Found saved scopes:', savedScopes);
+        
+        // Map of scopes to checkbox IDs
+        const scopeToCheckboxMap = {
+            'https://graph.microsoft.com/User.Read': 'user-read',
+            'https://graph.microsoft.com/Calendars.Read': 'calendars-read',
+            'https://graph.microsoft.com/Calendars.ReadWrite': 'calendars-readwrite',
+            'https://graph.microsoft.com/Chat.Read': 'chat-read',
+            'https://graph.microsoft.com/Chat.ReadWrite': 'chat-readwrite'
+        };
+        
+        // Check the appropriate checkboxes
+        savedScopes.forEach(scope => {
+            const checkboxId = scopeToCheckboxMap[scope];
+            if (checkboxId) {
+                const checkbox = document.getElementById(checkboxId);
+                if (checkbox) {
+                    checkbox.checked = true;
+                    
+                    // Also check the parent group checkbox if all items in group are checked
+                    const groupCheckbox = checkbox.closest('.scope-group').querySelector('.scope-group-checkbox');
+                    if (groupCheckbox) {
+                        const groupScopes = groupCheckbox.closest('.scope-group').querySelectorAll('.scope-checkbox');
+                        const checkedScopes = groupCheckbox.closest('.scope-group').querySelectorAll('.scope-checkbox:checked');
+                        if (groupScopes.length === checkedScopes.length) {
+                            groupCheckbox.checked = true;
+                        }
+                    }
+                }
+            }
+        });
+    }
+}
+
+// Token expiration functions
+function updateTokenExpiration() {
+    const tokenExpirationEl = document.getElementById('tokenExpiration');
+    const expirationTextEl = document.getElementById('expirationText');
+    
+    if (!tokenExpirationEl || !expirationTextEl) return;
+    
+    const expiresAt = tokenExpirationEl.getAttribute('data-expires');
+    if (!expiresAt) return;
+    
+    const expirationTime = new Date(expiresAt);
+    const now = new Date();
+    const diffMs = expirationTime - now;
+    
+    if (diffMs <= 0) {
+        expirationTextEl.textContent = 'Token expired';
+        expirationTextEl.className = 'text-danger';
+        return;
+    }
+    
+    const diffMinutes = Math.floor(diffMs / (1000 * 60));
+    const diffHours = Math.floor(diffMinutes / 60);
+    const remainingMinutes = diffMinutes % 60;
+    
+    let expirationText;
+    if (diffHours > 0) {
+        expirationText = `Expires in ${diffHours}h ${remainingMinutes}m`;
+    } else if (diffMinutes > 0) {
+        expirationText = `Expires in ${diffMinutes} minutes`;
+    } else {
+        const diffSeconds = Math.floor(diffMs / 1000);
+        expirationText = `Expires in ${diffSeconds} seconds`;
+    }
+    
+    // Color coding based on time remaining
+    if (diffMinutes <= 5) {
+        expirationTextEl.className = 'text-danger';
+    } else if (diffMinutes <= 15) {
+        expirationTextEl.className = 'text-warning';
+    } else {
+        expirationTextEl.className = 'text-success';
+    }
+    
+    expirationTextEl.textContent = expirationText;
+}
+
+function startTokenExpirationTimer() {
+    updateTokenExpiration();
+    // Update every 30 seconds
+    setInterval(updateTokenExpiration, 30000);
+}
+
+// Contact and Donate Functions
+function contactDeveloper() {
+    window.open('mailto:nurza.cool@gmail.com?subject=Azure OAuth2 Playground - Contact&body=Hello,%0D%0A%0D%0AI am contacting you regarding the Azure OAuth2 Playground application.%0D%0A%0D%0AMessage:%0D%0A', '_blank');
+}
+
+function donatePaypal() {
+    // PayPal donation link - opens PayPal send money page
+    window.open('https://paypal.me/nurzazin', '_blank');
+}
+
+// Initialize event listeners
+document.addEventListener('DOMContentLoaded', () => {
+    // Initialize scope checkboxes
+    const scopeCheckboxes = document.querySelectorAll('.scope-checkbox');
+    scopeCheckboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', updateCustomScopes);
+    });
+    
+    // Initialize scope group checkboxes
+    const groupCheckboxes = document.querySelectorAll('.scope-group-checkbox');
+    groupCheckboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', () => toggleScopeGroup(checkbox.id));
+    });
+    
+    // Set default request URI
+    const requestUriInput = document.getElementById('requestUri');
+    if (requestUriInput && !requestUriInput.value) {
+        requestUriInput.value = '/me';
+    }
+    
+    // Load saved configuration and check appropriate scopes
+    loadSavedConfiguration();
+    
+    // Start token expiration timer if token exists
+    if (document.getElementById('tokenExpiration')) {
+        startTokenExpirationTimer();
     }
 });

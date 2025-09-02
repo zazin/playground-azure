@@ -51,7 +51,9 @@ app.use(express.static(join(dirname(__dirname), 'public')));
 // Routes
 app.get('/', async (req, res) => {
   try {
-    const tokens = await storage.getActiveTokens();
+    const allTokens = await storage.getActiveTokens();
+    // Only use the first (most recent) token for single token mode
+    const tokens = allTokens.length > 0 ? [allTokens[0]] : [];
     const stats = await storage.getTokenStatistics();
     const config = await storage.getConfiguration();
     res.render('index', { tokens, stats, config });
@@ -282,50 +284,78 @@ app.post('/api/token/:id/revoke', async (req, res) => {
 app.post('/api/token/:id/refresh', async (req, res) => {
   try {
     // Get the existing token from storage
-    const existingToken = await storage.getToken(req.params.id);
+    const existingToken = await storage.getTokenById(req.params.id);
     if (!existingToken) {
       return res.status(404).json({ success: false, error: 'Token not found' });
     }
 
-    // For OAuth2 Authorization Code flow, we would need to use refresh_token
-    // Since this is a demo, we'll simulate getting a new token by re-authenticating
-    // In a real implementation, you would use the stored refresh token with MSAL
-    
-    try {
-      // Use MSAL to get a fresh token
-      const clientCredentialRequest = {
-        scopes: existingToken.scopes ? existingToken.scopes.split(',') : config.scopes,
-      };
+    console.log('🔄 Attempting to refresh token for ID:', req.params.id);
 
-      const response = await cca.acquireTokenSilent(clientCredentialRequest);
-      
-      // Update the token in storage with new values
-      const updatedToken = {
-        id: req.params.id,
-        access_token: response.accessToken,
-        expires_at: response.expiresOn.toISOString(),
-        refresh_token: response.refreshToken || existingToken.refresh_token,
-        scopes: existingToken.scopes,
-        status: 'active'
-      };
-
-      await storage.updateToken(updatedToken);
-      
-      res.json({ 
-        success: true, 
-        message: 'Token refreshed successfully',
-        expires_at: response.expiresOn.toISOString()
+    // Get current configuration
+    const config = await storage.getConfiguration();
+    if (!config.clientId || !config.clientSecret || !config.tenantId) {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Configuration missing. Please reconfigure Azure AD credentials.' 
       });
+    }
+
+    try {
+      const { ConfidentialClientApplication } = await import('@azure/msal-node');
+      
+      const msalConfig = {
+        auth: {
+          clientId: config.clientId,
+          authority: config.authority || `https://login.microsoftonline.com/${config.tenantId}`,
+          clientSecret: config.clientSecret,
+        }
+      };
+
+      const clientApp = new ConfidentialClientApplication(msalConfig);
+      
+      // For Authorization Code flow, we need to get a new token by getting a fresh one
+      // In a real scenario with refresh tokens, you'd use acquireTokenSilent with the refresh token
+      // For this demo, we'll get a new token using client credentials
+      const clientCredentialRequest = {
+        scopes: config.scopes || ['https://graph.microsoft.com/.default'],
+      };
+
+      const response = await clientApp.acquireTokenByClientCredential(clientCredentialRequest);
+      
+      if (response) {
+        // Update the token in storage with new values
+        const updatedTokenInfo = {
+          clientId: config.clientId,
+          tenantId: config.tenantId,
+          accessToken: response.accessToken,
+          tokenType: response.tokenType || 'Bearer',
+          expiresAt: response.expiresOn.toISOString(),
+          scopes: config.scopes,
+          flowType: 'client_credentials_refresh',
+          userId: existingToken.user_id || 'system'
+        };
+
+        // Save as new token and mark old one as refreshed
+        await storage.updateTokenStatus(req.params.id, 'refreshed');
+        const newToken = await storage.saveToken(updatedTokenInfo);
+        
+        console.log('✅ Token refreshed successfully');
+        res.json({ 
+          success: true, 
+          message: 'Token refreshed successfully',
+          expires_at: response.expiresOn.toISOString()
+        });
+      }
     } catch (msalError) {
-      console.error('MSAL refresh error:', msalError);
+      console.error('❌ MSAL refresh error:', msalError);
       res.status(400).json({ 
         success: false, 
-        error: 'Failed to refresh token. Please re-authenticate.',
+        error: 'Failed to refresh token. Please re-authenticate manually.',
         details: msalError.message 
       });
     }
   } catch (error) {
-    console.error('Error refreshing token:', error);
+    console.error('❌ Error refreshing token:', error);
     res.status(500).json({ success: false, error: error.message });
   }
 });

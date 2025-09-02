@@ -1,414 +1,230 @@
 
-<!-- Step-by-Step Process -->
-<div class="row">
-    <div class="col-md-12">
-        <!-- Progress Steps -->
-        <div class="d-flex justify-content-center mb-4">
-            <div class="d-flex align-items-center">
-                <div class="step-indicator <%= (config.clientId && config.tenantId && config.clientSecret) ? 'completed' : 'active' %>">
-                    <span class="step-number">1</span>
-                </div>
-                <div class="step-line"></div>
-                <div class="step-indicator <%= (config.clientId && config.tenantId && config.clientSecret) ? 'active' : 'pending' %>">
-                    <span class="step-number">2</span>
-                </div>
-                <div class="step-line"></div>
-                <div class="step-indicator pending">
-                    <span class="step-number">3</span>
-                </div>
+<!-- Google OAuth Playground Style Layout -->
+<div class="playground-container">
+    <!-- Left Sidebar -->
+    <div class="playground-sidebar">
+        <!-- Step 1: Select & authorize APIs -->
+        <div class="step-section" id="step1">
+            <div class="step-header" onclick="toggleStep(1)">
+                <span class="step-toggle">▼</span>
+                <strong>Step 1</strong> Select & authorize APIs
             </div>
-        </div>
+            <div class="step-content">
+                <p class="step-description">
+                    Select the scope for the APIs you would like to access or input your own OAuth scopes below. 
+                    Then click the <strong>"Authorize APIs"</strong> button.
+                </p>
 
-        <!-- Step Labels -->
-        <div class="row text-center mb-4">
-            <div class="col-4">
-                <small class="text-muted">Configure Azure AD</small>
-            </div>
-            <div class="col-4">
-                <small class="text-muted">Authenticate</small>
-            </div>
-            <div class="col-4">
-                <small class="text-muted">Test APIs</small>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Step 1: Quick Setup -->
-<div class="card mb-4 shadow-sm">
-    <div class="card-header bg-primary text-white d-flex align-items-center">
-        <div class="step-badge me-3">1</div>
-        <div>
-            <h5 class="mb-0">Quick Setup</h5>
-            <small>Configure your Azure AD application</small>
-        </div>
-    </div>
-    <div class="card-body">
-        <form id="configForm">
-            <!-- Essential Fields Only -->
-            <div class="row g-3">
-                <div class="col-md-3">
-                    <label for="clientId" class="form-label fw-bold">
-                        <i class="bi bi-key text-primary"></i> Client ID
-                    </label>
-                    <input type="text" class="form-control form-control-lg" id="clientId" 
-                           value="<%= config.clientId || '' %>" 
-                           placeholder="Your App ID">
-                    <div class="form-text">From Azure AD App Registration</div>
-                </div>
-                <div class="col-md-3">
-                    <label for="tenantId" class="form-label fw-bold">
-                        <i class="bi bi-building text-primary"></i> Tenant ID
-                    </label>
-                    <input type="text" class="form-control form-control-lg" id="tenantId" 
-                           value="<%= config.tenantId || '' %>" 
-                           placeholder="Your Directory ID">
-                    <div class="form-text">Your Organization ID</div>
-                </div>
-                <div class="col-md-3">
-                    <label for="clientSecret" class="form-label fw-bold">
-                        <i class="bi bi-shield-lock text-primary"></i> Client Secret
-                    </label>
-                    <input type="password" class="form-control form-control-lg" id="clientSecret" 
-                           value="<%= config.clientSecret || '' %>"
-                           placeholder="Your App Secret">
-                    <div class="form-text">Generated in Certificates & Secrets</div>
-                </div>
-                <div class="col-md-3">
-                    <label for="redirectUri" class="form-label fw-bold">
-                        <i class="bi bi-arrow-return-left text-primary"></i> Redirect URI
-                    </label>
-                    <input type="text" class="form-control form-control-lg" id="redirectUri" 
-                           value="<%= config.redirectUri || '' %>"
-                           placeholder="localhost:3000/api/auth/callback">
-                    <div class="form-text">Leave empty for default</div>
-                </div>
-            </div>
-
-            <!-- API Permissions -->
-            <div class="mt-4">
-                <label class="form-label fw-bold">
-                    <i class="bi bi-list-check text-primary"></i> API Permissions
-                </label>
-                <div class="bg-light p-3 rounded">
-                    <div id="scopesList" class="mb-3">
-                        <!-- Current scopes displayed as badges -->
-                    </div>
-                    
-                    <div class="row g-2">
-                        <div class="col-md-6">
-                            <h6 class="text-success mb-2">
-                                <i class="bi bi-microsoft"></i> Microsoft Graph
-                            </h6>
-                            <div class="d-flex flex-wrap gap-1">
-                                <button type="button" class="btn btn-sm btn-outline-success" 
-                                        onclick="addQuickScope('https://graph.microsoft.com/User.Read')">
-                                    <i class="bi bi-person"></i> Profile
-                                </button>
-                                <button type="button" class="btn btn-sm btn-outline-success" 
-                                        onclick="addQuickScope('https://graph.microsoft.com/Calendars.Read')">
-                                    <i class="bi bi-calendar"></i> Calendar
-                                </button>
-                            </div>
+                <!-- API Scopes List -->
+                <div class="api-scopes">
+                    <div class="scope-group">
+                        <div class="scope-group-header">
+                            <input type="checkbox" id="graph-apis" class="scope-group-checkbox">
+                            <label for="graph-apis"><strong>Microsoft Graph API v1</strong></label>
                         </div>
-                        <div class="col-md-6">
-                            <h6 class="text-info mb-2">
-                                <i class="bi bi-chat"></i> Teams & Chat
-                            </h6>
-                            <div class="d-flex flex-wrap gap-1">
-                                <button type="button" class="btn btn-sm btn-outline-info" 
-                                        onclick="addQuickScope('https://graph.microsoft.com/Chat.Read')">
-                                    <i class="bi bi-chat"></i> Read
-                                </button>
-                                <button type="button" class="btn btn-sm btn-outline-info" 
-                                        onclick="addQuickScope('https://graph.microsoft.com/Chat.ReadWrite')">
-                                    <i class="bi bi-chat-square-text"></i> Write
-                                </button>
+                        <div class="scope-items">
+                            <div class="scope-item">
+                                <input type="checkbox" id="user-read" class="scope-checkbox">
+                                <label for="user-read">User.Read</label>
+                            </div>
+                            <div class="scope-item">
+                                <input type="checkbox" id="calendars-read" class="scope-checkbox">
+                                <label for="calendars-read">Calendars.Read</label>
+                            </div>
+                            <div class="scope-item">
+                                <input type="checkbox" id="calendars-readwrite" class="scope-checkbox">
+                                <label for="calendars-readwrite">Calendars.ReadWrite</label>
                             </div>
                         </div>
                     </div>
-                    
-                    <div class="mt-3">
-                        <div class="input-group">
-                            <input type="text" class="form-control" id="newScopeInput" 
-                                   placeholder="Or add custom scope...">
-                            <button class="btn btn-outline-primary" type="button" onclick="addScope()">
-                                <i class="bi bi-plus"></i> Add
-                            </button>
+
+                    <div class="scope-group">
+                        <div class="scope-group-header">
+                            <input type="checkbox" id="teams-apis" class="scope-group-checkbox">
+                            <label for="teams-apis"><strong>Microsoft Teams & Chat API v1</strong></label>
+                        </div>
+                        <div class="scope-items">
+                            <div class="scope-item">
+                                <input type="checkbox" id="chat-read" class="scope-checkbox">
+                                <label for="chat-read">Chat.Read</label>
+                            </div>
+                            <div class="scope-item">
+                                <input type="checkbox" id="chat-readwrite" class="scope-checkbox">
+                                <label for="chat-readwrite">Chat.ReadWrite</label>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
 
-            <div class="d-flex justify-content-between align-items-center mt-4">
-                <div class="d-flex gap-3">
-                    <div class="badge <%= config.clientId ? 'bg-success' : 'bg-secondary' %>">
-                        <i class="bi bi-<%= config.clientId ? 'check' : 'x' %>"></i> Client ID
+                <!-- Custom Scopes Input -->
+                <div class="custom-scopes">
+                    <label for="customScopes" class="form-label">Input scopes</label>
+                    <input type="text" id="customScopes" class="form-control" placeholder="https://graph.microsoft.com/.default" value="<%= (config.scopes && config.scopes.length > 0) ? config.scopes.join(' ') : '' %>">
+                </div>
+
+                <!-- Configuration Fields -->
+                <div class="config-section">
+                    <h6 class="config-title">Configuration</h6>
+                    <div class="config-field">
+                        <label for="clientId" class="form-label">Client ID</label>
+                        <input type="text" id="clientId" class="form-control" 
+                               value="<%= config.clientId || '' %>" 
+                               placeholder="Your Application (client) ID">
                     </div>
-                    <div class="badge <%= config.tenantId ? 'bg-success' : 'bg-secondary' %>">
-                        <i class="bi bi-<%= config.tenantId ? 'check' : 'x' %>"></i> Tenant ID  
+                    <div class="config-field">
+                        <label for="clientSecret" class="form-label">Client Secret</label>
+                        <input type="password" id="clientSecret" class="form-control"
+                               value="<%= config.clientSecret || '' %>" 
+                               placeholder="Your client secret value">
                     </div>
-                    <div class="badge <%= config.clientSecret ? 'bg-success' : 'bg-secondary' %>">
-                        <i class="bi bi-<%= config.clientSecret ? 'check' : 'x' %>"></i> Secret
+                    <div class="config-field">
+                        <label for="tenantId" class="form-label">Tenant ID</label>
+                        <input type="text" id="tenantId" class="form-control"
+                               value="<%= config.tenantId || '' %>" 
+                               placeholder="Your Directory (tenant) ID">
+                    </div>
+                    <div class="config-field">
+                        <label for="redirectUri" class="form-label">Redirect URI</label>
+                        <input type="text" id="redirectUri" class="form-control"
+                               value="<%= config.redirectUri || 'http://localhost:3000/api/auth/callback' %>" 
+                               placeholder="http://localhost:3000/api/auth/callback">
+                        <div class="form-text">
+                            <i class="bi bi-info-circle"></i> This must match the redirect URI configured in your Azure AD app registration. 
+                            Default: <code>http://localhost:3000/api/auth/callback</code>
+                        </div>
                     </div>
                 </div>
+
+                <!-- Authorize Button -->
+                <button class="btn btn-primary authorize-btn" onclick="authorizeAPIs()">
+                    <i class="bi bi-shield-check"></i> Authorize APIs
+                </button>
+            </div>
+        </div>
+
+        <!-- Step 2: Exchange authorization code for tokens -->
+        <div class="step-section" id="step2">
+            <div class="step-header <%= (config.clientId && config.tenantId && config.clientSecret) ? '' : 'disabled' %>" onclick="<%= (config.clientId && config.tenantId && config.clientSecret) ? 'toggleStep(2)' : '' %>">
+                <span class="step-toggle">▶</span>
+                <strong>Step 2</strong> Exchange authorization code for tokens
+            </div>
+            <div class="step-content" style="display: none;">
+                <p class="step-description">
+                    If you have an authorization code, you can exchange it for an access token.
+                </p>
                 
-                <button type="submit" class="btn btn-primary btn-lg">
-                    <i class="bi bi-save"></i> Save & Continue
-                </button>
-            </div>
-        </form>
-        
-        <div id="configResult" class="mt-3"></div>
-    </div>
-</div>
-
-<!-- Step 2: Authenticate -->
-<div class="card mb-4 shadow-sm">
-    <div class="card-header bg-success text-white d-flex align-items-center">
-        <div class="step-badge me-3">2</div>
-        <div>
-            <h5 class="mb-0">Authenticate</h5>
-            <small>Sign in with your Microsoft account</small>
-        </div>
-    </div>
-    <div class="card-body">
-        <% if (!config.clientId || !config.tenantId || !config.clientSecret) { %>
-            <div class="text-center py-4">
-                <i class="bi bi-arrow-up text-muted" style="font-size: 2rem;"></i>
-                <p class="text-muted mt-2">Complete configuration above to continue</p>
-                <button class="btn btn-outline-secondary" disabled>
-                    <i class="bi bi-microsoft"></i> Sign In with Microsoft
-                </button>
-            </div>
-        <% } else { %>
-            <div class="row align-items-center">
-                <div class="col-md-8">
-                    <div class="mb-3">
-                        <h6 class="text-success mb-2">✅ Ready to authenticate</h6>
-                        <p class="mb-2">Click to sign in with Microsoft and generate access tokens</p>
-                        <div class="d-flex flex-wrap gap-1">
-                            <% if (config.scopes && config.scopes.length > 0) { %>
-                                <small class="text-muted me-2">Permissions:</small>
-                                <% config.scopes.slice(0, 3).forEach(scope => { %>
-                                    <span class="badge bg-light text-dark"><%= scope.split('/').pop() %></span>
-                                <% }); %>
-                                <% if (config.scopes.length > 3) { %>
-                                    <span class="badge bg-light text-dark">+<%= config.scopes.length - 3 %> more</span>
-                                <% } %>
-                            <% } %>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-4 text-center">
-                    <a href="/api/auth/login" class="btn btn-success btn-lg pulse-button">
-                        <i class="bi bi-microsoft"></i> Sign In
-                    </a>
-                </div>
-            </div>
-        <% } %>
-    </div>
-</div>
-
-<!-- Step 3: Test APIs -->
-<div class="card mb-4 shadow-sm">
-    <div class="card-header bg-info text-white d-flex align-items-center">
-        <div class="step-badge me-3">3</div>
-        <div>
-            <h5 class="mb-0">Test APIs</h5>
-            <small>Try Microsoft Graph endpoints</small>
-        </div>
-    </div>
-    <div class="card-body">
-        <% if (tokens && tokens.length > 0) { %>
-            <!-- Quick API Tests -->
-            <div class="row g-3">
-                <div class="col-md-4">
-                    <div class="api-card" onclick="testQuickAPI('profile')">
-                        <div class="api-icon bg-success">
-                            <i class="bi bi-person"></i>
-                        </div>
-                        <div class="api-content">
-                            <h6>My Profile</h6>
-                            <small class="text-muted">GET /me</small>
-                        </div>
-                        <div class="api-action">
-                            <i class="bi bi-arrow-right"></i>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="api-card" onclick="testQuickAPI('calendar')">
-                        <div class="api-icon bg-primary">
-                            <i class="bi bi-calendar"></i>
-                        </div>
-                        <div class="api-content">
-                            <h6>Calendar</h6>
-                            <small class="text-muted">GET /me/events</small>
-                        </div>
-                        <div class="api-action">
-                            <i class="bi bi-arrow-right"></i>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="api-card" onclick="testQuickAPI('chats')">
-                        <div class="api-icon bg-info">
-                            <i class="bi bi-chat"></i>
-                        </div>
-                        <div class="api-content">
-                            <h6>My Chats</h6>
-                            <small class="text-muted">GET /me/chats</small>
-                        </div>
-                        <div class="api-action">
-                            <i class="bi bi-arrow-right"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Advanced API Testing -->
-            <div class="mt-4">
-                <button class="btn btn-outline-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#advancedAPI">
-                    <i class="bi bi-gear"></i> Advanced API Testing
-                </button>
-            </div>
-            
-            <div class="collapse mt-3" id="advancedAPI">
-                <div class="border p-3 rounded bg-light">
-                    <form id="apiTestForm">
-                        <div class="row g-3">
-                            <div class="col-md-3">
-                                <label for="apiMethod" class="form-label">Method</label>
-                                <select class="form-select" id="apiMethod">
-                                    <option value="GET">GET</option>
-                                    <option value="POST">POST</option>
-                                </select>
+                <% if (tokens && tokens.length > 0) { %>
+                    <div class="token-info">
+                        <div class="token-field">
+                            <label class="form-label">Access Token</label>
+                            <div class="token-display">
+                                <input type="text" class="form-control" value="<%= tokens[0].access_token %>" readonly style="font-size: 11px;">
+                                <button class="btn btn-sm btn-outline-secondary" onclick="copyToken('<%= tokens[0].access_token %>')">
+                                    <i class="bi bi-clipboard"></i>
+                                </button>
                             </div>
-                            <div class="col-md-9">
-                                <label for="apiUrl" class="form-label">Endpoint</label>
-                                <div class="input-group">
-                                    <span class="input-group-text">https://graph.microsoft.com/v1.0</span>
-                                    <input type="text" class="form-control" id="apiUrl" placeholder="/me">
-                                </div>
+                            <div class="token-expiration" id="tokenExpiration" data-expires="<%= tokens[0].expires_at %>">
+                                <small class="text-muted">
+                                    <i class="bi bi-clock"></i> <span id="expirationText">Calculating...</span>
+                                </small>
                             </div>
                         </div>
-                        <div class="mt-3">
-                            <button type="submit" class="btn btn-primary">
-                                <i class="bi bi-play"></i> Test API
+                        <div class="token-actions">
+                            <button class="btn btn-outline-primary btn-sm" onclick="refreshToken(<%= tokens[0].id %>)">
+                                <i class="bi bi-arrow-clockwise"></i> Refresh token
+                            </button>
+                            <button class="btn btn-outline-danger btn-sm" onclick="revokeToken(<%= tokens[0].id %>)">
+                                <i class="bi bi-x-circle"></i> Revoke token
                             </button>
                         </div>
-                    </form>
+                    </div>
+                <% } else { %>
+                    <div class="no-token-message">
+                        <p class="text-muted">No tokens available. Complete Step 1 first.</p>
+                    </div>
+                <% } %>
+            </div>
+        </div>
+
+        <!-- Step 3: Configure request to API -->
+        <div class="step-section" id="step3">
+            <div class="step-header <%= (tokens && tokens.length > 0) ? '' : 'disabled' %>" onclick="<%= (tokens && tokens.length > 0) ? 'toggleStep(3)' : '' %>">
+                <span class="step-toggle">▶</span>
+                <strong>Step 3</strong> Configure request to API
+            </div>
+            <div class="step-content" style="display: none;">
+                <!-- Available APIs List -->
+                <div class="api-list-section mb-3">
+                    <label class="form-label">Select an API to test</label>
+                    <select id="apiSelector" class="form-select" onchange="loadSelectedAPI()">
+                        <option value="">Choose a predefined API...</option>
+                        <optgroup label="Profile">
+                            <option value="profile-me">Get My Profile</option>
+                            <option value="profile-photo">Get My Photo</option>
+                            <option value="profile-update">Update My Profile</option>
+                        </optgroup>
+                        <optgroup label="Calendar">
+                            <option value="calendar-main">Get My Calendar</option>
+                            <option value="calendar-events">Get My Events</option>
+                            <option value="calendar-today">Get Events Today</option>
+                            <option value="calendar-week">Get Events This Week</option>
+                            <option value="calendar-month">Get Events This Month</option>
+                            <option value="calendar-create">Create Calendar Event</option>
+                        </optgroup>
+                        <optgroup label="Microsoft Teams">
+                            <option value="teams-joined">Get My Teams</option>
+                            <option value="teams-channels">Get Team Channels</option>
+                            <option value="teams-messages">Get Channel Messages</option>
+                        </optgroup>
+                        <optgroup label="Chat">
+                            <option value="chat-list">Get My Chats</option>
+                            <option value="chat-group">Get Group Chats Only</option>
+                            <option value="chat-oneone">Get 1-on-1 Chats Only</option>
+                            <option value="chat-messages">Get Chat Messages</option>
+                            <option value="chat-send">Send Chat Message</option>
+                        </optgroup>
+                    </select>
+                </div>
+
+                <div class="api-request-form">
+                    <div class="form-group">
+                        <label class="form-label">HTTP Method</label>
+                        <select id="httpMethod" class="form-select">
+                            <option value="GET">GET</option>
+                            <option value="POST">POST</option>
+                            <option value="PATCH">PATCH</option>
+                            <option value="DELETE">DELETE</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Request URI</label>
+                        <div class="uri-input">
+                            <span class="uri-base">https://graph.microsoft.com/v1.0</span>
+                            <input type="text" id="requestUri" class="form-control" placeholder="/me" value="/me">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Request body</label>
+                        <textarea id="requestBody" class="form-control" rows="4" placeholder="Enter request body (JSON)"></textarea>
+                    </div>
+                    <button class="btn btn-primary send-btn" onclick="sendAPIRequest()">
+                        <i class="bi bi-send"></i> Send the request
+                    </button>
                 </div>
             </div>
-        <% } else { %>
-            <div class="text-center py-4">
-                <i class="bi bi-arrow-up text-muted" style="font-size: 2rem;"></i>
-                <p class="text-muted mt-2">Sign in above to test APIs</p>
-                <button class="btn btn-outline-secondary" disabled>
-                    <i class="bi bi-play"></i> Test APIs
-                </button>
-            </div>
-        <% } %>
+        </div>
     </div>
-</div>
 
-<!-- API Response Area -->
-<div class="card mt-4" id="apiResponseCard" style="display: none;">
-    <div class="card-header bg-light">
-        <h6 class="mb-0"><i class="bi bi-code-square"></i> API Response</h6>
-    </div>
-    <div class="card-body">
-        <div id="apiResult"></div>
-    </div>
-</div>
-
-<!-- Active Tokens Table -->
-<div class="card">
-    <div class="card-header bg-secondary text-white">
-        <h5 class="mb-0"><i class="bi bi-list"></i> Active Tokens</h5>
-    </div>
-    <div class="card-body">
-        <% if (tokens && tokens.length > 0) { %>
-            <div class="table-responsive">
-                <table class="table table-hover">
-                    <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>Client ID</th>
-                            <th>Token (Preview)</th>
-                            <th>Expires At</th>
-                            <th>Last Used</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <% tokens.forEach(token => { %>
-                            <tr>
-                                <td><%= token.id %></td>
-                                <td><%= token.client_id.substring(0, 8) %>...</td>
-                                <td>
-                                    <span class="token-preview"><%= token.access_token.substring(0, 20) %>...</span>
-                                    <button class="btn btn-sm btn-outline-secondary" onclick="copyToken('<%= token.access_token %>')">
-                                        <i class="bi bi-clipboard"></i>
-                                    </button>
-                                </td>
-                                <td>
-                                    <% 
-                                        const now = new Date();
-                                        const expiresAt = new Date(token.expires_at);
-                                        const diffMs = expiresAt - now;
-                                        const diffMins = Math.round(diffMs / 60000);
-                                        const diffHours = Math.round(diffMs / 3600000);
-                                        const diffDays = Math.round(diffMs / 86400000);
-                                        
-                                        let timeDisplay;
-                                        if (diffMs < 0) {
-                                            timeDisplay = '<span class="text-danger">Expired</span>';
-                                        } else if (diffMins < 1) {
-                                            timeDisplay = '<span class="text-danger">Less than 1 minute</span>';
-                                        } else if (diffMins < 60) {
-                                            timeDisplay = `<span class="text-warning">${diffMins} minute${diffMins === 1 ? '' : 's'}</span>`;
-                                        } else if (diffHours < 24) {
-                                            timeDisplay = `<span class="text-success">${diffHours} hour${diffHours === 1 ? '' : 's'}</span>`;
-                                        } else {
-                                            timeDisplay = `<span class="text-success">${diffDays} day${diffDays === 1 ? '' : 's'}</span>`;
-                                        }
-                                    %>
-                                    <%- timeDisplay %>
-                                    <small class="text-muted d-block"><%= expiresAt.toLocaleString() %></small>
-                                </td>
-                                <td><%= token.last_used ? new Date(token.last_used).toLocaleString() : 'Never' %></td>
-                                <td>
-                                    <button class="btn btn-sm btn-warning" onclick="refreshToken(<%= token.id %>)">
-                                        <i class="bi bi-arrow-clockwise"></i> Refresh
-                                    </button>
-                                    <button class="btn btn-sm btn-danger" onclick="revokeToken(<%= token.id %>)">
-                                        <i class="bi bi-x-circle"></i> Revoke
-                                    </button>
-                                </td>
-                            </tr>
-                        <% }); %>
-                    </tbody>
-                </table>
-            </div>
-        <% } else { %>
-            <p class="text-muted">No active tokens found. Generate a new token to get started.</p>
-        <% } %>
-    </div>
-</div>
-
-<!-- Usage Modal -->
-<div class="modal fade" id="usageModal" tabindex="-1">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Token Usage History</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body" id="usageModalBody">
-                Loading...
+    <!-- Right Panel - Request/Response -->
+    <div class="playground-content">
+        <div class="content-header">
+            <h5>Request / Response</h5>
+        </div>
+        <div class="content-body">
+            <div id="requestResponse" class="request-response-area">
+                <p class="no-request-message">No request.</p>
             </div>
         </div>
     </div>
 </div>
+
