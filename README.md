@@ -2,148 +2,126 @@
 
 🚀 Interactive web application for testing Microsoft Graph APIs with OAuth2 authentication.
 
-## Features
-
-- **OAuth2 Authorization Code Flow** - Secure authentication with Microsoft Graph
-- **Auto-Save Scope Management** - Automatically saves configuration changes
-- **Microsoft Teams Integration** - Chat and Calendar API testing
-- **Token Management** - Refresh, revoke, and manage access tokens
-- **Interactive JSON Viewer** - Copy keys and values with one click
-- **Persistent Storage** - Tokens and configuration survive server restarts
-- **Real-time Development** - Auto-reload during development
-
 ## Quick Start
 
-### Run with npx (Recommended)
+Run instantly with npx:
 
 ```bash
 npx playground-azure
 ```
 
-### Custom Port
+Open `http://localhost:3000` in your browser and start testing Microsoft Graph APIs!
 
-```bash
-npx playground-azure --port=8080
-```
+## Features
 
-### Help
-
-```bash
-npx playground-azure --help
-```
+✨ **Auto-Save Configuration** - Changes save automatically as you work  
+🔐 **OAuth2 Flow** - Secure Microsoft Graph authentication  
+💬 **Teams Chat APIs** - Send messages, read chats  
+📅 **Calendar APIs** - Manage events and schedules  
+🔄 **Token Management** - Auto-refresh, revoke, persistent storage  
+📋 **JSON Viewer** - Copy API responses with one click  
+⚡ **Instant Setup** - No installation required with npx  
 
 ## Usage
 
-1. **Start the playground**
-   ```bash
-   npx playground-azure
-   ```
-
-2. **Open your browser** to `http://localhost:3000`
-
-3. **Configure Azure AD App**
-   - Enter your Client ID, Client Secret, and Tenant ID
-   - Set redirect URI (default: `http://localhost:3000/api/auth/callback`)
-
-4. **Add Scopes**
-   - Use quick-add buttons for common Microsoft Graph scopes
-   - Add custom scopes as needed
-   - Configuration auto-saves when scopes are modified
-
-5. **Generate Tokens**
-   - Click "Generate Access Token" to start OAuth flow
-   - Tokens are automatically saved and persist across restarts
-
-6. **Test APIs**
-   - Use pre-configured Microsoft Graph API endpoints
-   - Test Teams Chat, Calendar, and other Graph APIs
-   - Copy response data with built-in JSON viewer
-
-## Supported APIs
-
-### Microsoft Teams
-- Get my chats
-- Send chat messages
-- Get chat messages
-
-### Calendar
-- Get my events
-- Create calendar events
-- Get events for current week
-
-### User Profile
-- Get user profile information
-- Read user properties
-
-## Development
-
-### Local Development
-
+### 1. Start the Playground
 ```bash
-git clone <repository-url>
-cd playground-azure
-npm install
-npm run dev
+# Default port 3000
+npx playground-azure
+
+# Custom port
+npx playground-azure --port=8080
+
+# Show help
+npx playground-azure --help
 ```
 
-### Available Scripts
+### 2. Configure Azure AD
+1. Open `http://localhost:3000` in your browser
+2. Go to **Configuration** tab
+3. Enter your Azure AD app credentials:
+   - **Client ID** - From your Azure app registration
+   - **Tenant ID** - Your organization's directory ID  
+   - **Client Secret** - Generated secret value
+4. Configuration saves automatically ✅
 
-- `npm start` - Start production server
-- `npm run dev` - Development with auto-reload
-- `npm run dev:nodemon` - Development with nodemon
+### 3. Select API Scopes
+- Click quick-add buttons for common scopes
+- Add custom Microsoft Graph scopes
+- All changes auto-save instantly
 
-## Configuration
+### 4. Generate Access Token
+1. Click **"Generate Access Token"**
+2. Sign in with your Microsoft account
+3. Token saves automatically for reuse
 
-The application stores configuration in local JSON files:
+### 5. Test APIs
+- Try pre-built Microsoft Graph endpoints
+- View formatted JSON responses
+- Copy specific values with built-in buttons
+- Test Teams, Calendar, and Profile APIs
 
-- `config.json` - Azure AD application settings and scopes
-- `tokens.json` - Access tokens and metadata
-- `usage.json` - Token usage history
+## Available APIs
 
-## Requirements
+### 👤 User Profile
+- Get user information
+- Read profile properties
 
-- Node.js 18+ (for ES modules support)
-- Azure AD application registration
-- Microsoft Graph API permissions
+### 💬 Microsoft Teams Chat
+- List your chats
+- Send chat messages
+- Read chat history
+
+### 📅 Calendar
+- Get upcoming events
+- Create new meetings
+- Schedule with attendees
 
 ## Azure AD Setup
 
-1. **Register Application** in Azure Portal
-   - Go to Azure Active Directory > App registrations
-   - Create new registration
+Need an Azure AD app? Here's the quick setup:
 
-2. **Configure Authentication**
-   - Add redirect URI: `http://localhost:3000/api/auth/callback`
-   - Enable "Access tokens" and "ID tokens"
+1. **Azure Portal** → Azure Active Directory → App registrations → New
+2. **Authentication** → Add redirect URI: `http://localhost:3000/api/auth/callback`
+3. **API Permissions** → Microsoft Graph → Add permissions you need
+4. **Certificates & secrets** → New client secret → Copy the value
 
-3. **API Permissions**
-   - Add Microsoft Graph permissions based on your needs
-   - Common scopes: `User.Read`, `Calendars.Read`, `Chat.Read`
+Common permissions to add:
+- `User.Read` - Basic profile
+- `Calendars.Read` - View calendar
+- `Chat.Read` - Read Teams chats
 
-4. **Client Secret**
-   - Generate client secret in "Certificates & secrets"
-   - Copy the secret value (not the ID)
+## Command Options
 
-## Security Notes
+```bash
+# Run on default port 3000
+npx playground-azure
 
-- All credentials are stored locally in your browser/filesystem
-- No data is sent to external servers except Microsoft Graph
-- Use HTTPS in production environments
-- Regularly rotate client secrets
+# Run on custom port
+npx playground-azure --port=8080
 
-## License
+# Show help and features
+npx playground-azure --help
+```
 
-MIT
+## Why Use This?
 
-## Contributing
+🔥 **Instant Testing** - No setup, just run and test Microsoft Graph APIs  
+🛡️ **Secure** - All data stays local, nothing sent to third parties  
+💾 **Persistent** - Tokens and config survive restarts  
+🎯 **Focused** - Built specifically for Microsoft Graph API testing  
+📱 **Teams Ready** - Perfect for Teams app development  
 
-1. Fork the repository
-2. Create feature branch
-3. Make changes with tests
-4. Submit pull request
+## Requirements
 
-## Support
+- Node.js 18+ (automatically handled by npx)
+- Azure AD application registration
+- Microsoft Graph API permissions
 
-- Create issues on GitHub for bugs
-- Check Microsoft Graph documentation for API details
-- Review Azure AD documentation for authentication setup
+---
+
+Ready to test Microsoft Graph APIs? Just run:
+
+```bash
+npx playground-azure
+```
