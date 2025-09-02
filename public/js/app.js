@@ -2293,6 +2293,12 @@ document.addEventListener('DOMContentLoaded', () => {
         checkbox.addEventListener('change', () => toggleScopeGroup(checkbox.id));
     });
     
+    // Add event listeners for individual scope checkboxes
+    const scopeCheckboxes = document.querySelectorAll('.scope-checkbox');
+    scopeCheckboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', () => updateCustomScopes());
+    });
+    
     // Set default request URI
     const requestUriInput = document.getElementById('requestUri');
     if (requestUriInput && !requestUriInput.value) {
@@ -2301,6 +2307,9 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Load saved configuration and check appropriate scopes
     loadSavedConfiguration();
+    
+    // Update custom scopes based on checked checkboxes (including offline_access)
+    updateCustomScopes();
     
     // Start token expiration timer if token exists
     if (document.getElementById('tokenExpiration')) {

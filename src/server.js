@@ -149,6 +149,7 @@ app.get('/api/auth/login', async (req, res) => {
     });
 
     console.log('🔐 Redirecting to Azure AD login...');
+    console.log('📋 Requested scopes:', userScopes);
     res.redirect(authUrl);
   } catch (error) {
     console.error('Error generating auth URL:', error);
@@ -188,44 +189,62 @@ app.get('/api/auth/callback', async (req, res) => {
     );
     const userScopes = [...baseIdentityScopes, ...additionalScopes];
     
-    const response = await clientApp.acquireTokenByCode({
-      code: code,
-      scopes: userScopes,
-      redirectUri: redirectUri
-    });
+    // Instead of using MSAL's acquireTokenByCode which doesn't return refresh tokens,
+    // make a direct HTTP call to Azure AD token endpoint
+    const axios = (await import('axios')).default;
+    const tokenEndpoint = `https://login.microsoftonline.com/${config.tenantId}/oauth2/v2.0/token`;
+    
+    const params = new URLSearchParams();
+    params.append('client_id', config.clientId);
+    params.append('client_secret', config.clientSecret);
+    params.append('code', code);
+    params.append('redirect_uri', redirectUri);
+    params.append('grant_type', 'authorization_code');
+    params.append('scope', userScopes.join(' '));
+    
+    console.log('🔄 Making direct token request to Azure AD...');
+    
+    try {
+      const tokenResponse = await axios.post(tokenEndpoint, params, {
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded'
+        }
+      });
+      
+      const response = tokenResponse.data;
+      
+      console.log('📝 Token response received:', {
+        hasAccessToken: !!response.access_token,
+        hasRefreshToken: !!response.refresh_token,
+        hasIdToken: !!response.id_token,
+        scope: response.scope,
+        tokenType: response.token_type
+      });
 
-    if (response) {
       // Save user token to storage
       const tokenInfo = {
         clientId: config.clientId,
         tenantId: config.tenantId,
-        accessToken: response.accessToken,
-        refreshToken: response.refreshToken || null,
-        tokenType: response.tokenType || 'Bearer',
-        expiresAt: response.expiresOn.toISOString(),
-        scopes: response.scopes,
+        accessToken: response.access_token,
+        refreshToken: response.refresh_token || null,
+        tokenType: response.token_type || 'Bearer',
+        expiresAt: new Date(Date.now() + (response.expires_in * 1000)).toISOString(),
+        scopes: response.scope ? response.scope.split(' ') : userScopes,
         flowType: 'authorization_code',
-        userId: response.account?.homeAccountId || 'unknown'
+        userId: 'user_' + Date.now() // We'll extract from id_token if needed
       };
       
       const dbResult = await storage.saveToken(tokenInfo);
       
       // Store the original response for display
       req.session.originalTokenResponse = {
-        access_token: response.accessToken,
-        refresh_token: response.refreshToken || null,
-        token_type: response.tokenType || 'Bearer',
-        expires_in: Math.floor((response.expiresOn.getTime() - Date.now()) / 1000),
-        expires_on: response.expiresOn.toISOString(),
-        scope: response.scopes.join(' '),
-        account: {
-          homeAccountId: response.account?.homeAccountId,
-          environment: response.account?.environment,
-          tenantId: response.account?.tenantId,
-          username: response.account?.username,
-          localAccountId: response.account?.localAccountId,
-          name: response.account?.name
-        },
+        access_token: response.access_token,
+        refresh_token: response.refresh_token || null,
+        token_type: response.token_type || 'Bearer',
+        expires_in: response.expires_in,
+        expires_on: new Date(Date.now() + (response.expires_in * 1000)).toISOString(),
+        scope: response.scope,
+        id_token: response.id_token || null,
         flow_type: 'authorization_code',
         grant_type: 'authorization_code',
         client_id: config.clientId
@@ -235,6 +254,10 @@ app.get('/api/auth/callback', async (req, res) => {
       
       // Redirect to home page with success message
       res.redirect('/?auth=success&show_response=true');
+      
+    } catch (tokenError) {
+      console.error('❌ Error with direct token request:', tokenError.response?.data || tokenError.message);
+      res.redirect('/?auth=error&message=' + encodeURIComponent(tokenError.response?.data?.error_description || tokenError.message));
     }
   } catch (error) {
     console.error('Error exchanging code for token:', error);
@@ -342,58 +365,59 @@ app.post('/api/token/:id/refresh', async (req, res) => {
     }
 
     try {
-      const { ConfidentialClientApplication } = await import('@azure/msal-node');
+      // Make direct HTTP call to Azure AD token endpoint for refresh
+      const axios = (await import('axios')).default;
+      const tokenEndpoint = `https://login.microsoftonline.com/${config.tenantId}/oauth2/v2.0/token`;
       
-      const msalConfig = {
-        auth: {
-          clientId: config.clientId,
-          authority: config.authority || `https://login.microsoftonline.com/${config.tenantId}`,
-          clientSecret: config.clientSecret,
-        }
-      };
-
-      const clientApp = new ConfidentialClientApplication(msalConfig);
+      const params = new URLSearchParams();
+      params.append('client_id', config.clientId);
+      params.append('client_secret', config.clientSecret);
+      params.append('refresh_token', existingToken.refresh_token);
+      params.append('grant_type', 'refresh_token');
+      params.append('scope', existingToken.scopes ? existingToken.scopes.join(' ') : 'https://graph.microsoft.com/User.Read openid profile email offline_access');
       
-      // Use refresh token to get new access token
-      const refreshTokenRequest = {
-        refreshToken: existingToken.refresh_token,
-        scopes: existingToken.scopes || ['https://graph.microsoft.com/User.Read', 'openid', 'profile', 'email', 'offline_access'],
-      };
-
       console.log('🔄 Using refresh token to get new access token...');
-      const response = await clientApp.acquireTokenByRefreshToken(refreshTokenRequest);
+      
+      const tokenResponse = await axios.post(tokenEndpoint, params, {
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded'
+        }
+      });
+      
+      const response = tokenResponse.data;
       
       if (response) {
         // Update the token in storage with new values
         const updatedTokenInfo = {
           clientId: config.clientId,
           tenantId: config.tenantId,
-          accessToken: response.accessToken,
-          refreshToken: response.refreshToken || existingToken.refresh_token, // Keep existing if not provided
-          tokenType: response.tokenType || 'Bearer',
-          expiresAt: response.expiresOn.toISOString(),
-          scopes: response.scopes || existingToken.scopes,
+          accessToken: response.access_token,
+          refreshToken: response.refresh_token || existingToken.refresh_token, // Keep existing if not provided
+          tokenType: response.token_type || 'Bearer',
+          expiresAt: new Date(Date.now() + (response.expires_in * 1000)).toISOString(),
+          scopes: response.scope ? response.scope.split(' ') : existingToken.scopes,
           flowType: 'refresh_token',
-          userId: existingToken.user_id || response.account?.homeAccountId || 'unknown'
+          userId: existingToken.user_id || 'unknown'
         };
 
         // Save as new token and mark old one as refreshed
         await storage.updateTokenStatus(req.params.id, 'refreshed');
         const newToken = await storage.saveToken(updatedTokenInfo);
         
-        console.log('✅ Token refreshed successfully');
+        console.log('✅ Token refreshed successfully using grant_type=refresh_token');
         res.json({ 
           success: true, 
-          message: 'Token refreshed successfully',
-          expires_at: response.expiresOn.toISOString()
+          message: 'Token refreshed successfully using refresh_token grant',
+          expires_at: new Date(Date.now() + (response.expires_in * 1000)).toISOString(),
+          grant_type: 'refresh_token'
         });
       }
-    } catch (msalError) {
-      console.error('❌ MSAL refresh error:', msalError);
+    } catch (refreshError) {
+      console.error('❌ Refresh token error:', refreshError.response?.data || refreshError.message);
       res.status(400).json({ 
         success: false, 
         error: 'Failed to refresh token. Please re-authenticate manually.',
-        details: msalError.message 
+        details: refreshError.response?.data?.error_description || refreshError.message 
       });
     }
   } catch (error) {
