@@ -47,7 +47,7 @@ jobs:
         run: npm ci
 
       - name: Run tests
-        run: npm test --if-present
+        run: npm test
 
       - name: Bump version
         id: version
