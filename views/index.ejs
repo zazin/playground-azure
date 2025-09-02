@@ -1,0 +1,243 @@
+<div class="row mb-4">
+    <div class="col-md-12">
+        <h2><i class="bi bi-speedometer2"></i> Dashboard</h2>
+    </div>
+</div>
+
+
+<!-- Configuration Check -->
+<% if (!config.clientId || !config.tenantId || !config.clientSecret) { %>
+<div class="alert alert-warning">
+    <i class="bi bi-exclamation-triangle"></i>
+    <strong>Configuration Required!</strong> 
+    Please <a href="/config" class="alert-link">configure your Azure AD credentials</a> before generating tokens.
+</div>
+<% } %>
+
+<!-- User Authentication -->
+<div class="card mb-4">
+    <div class="card-header bg-success text-white">
+        <h5 class="mb-0"><i class="bi bi-person-circle"></i> Sign In with Microsoft</h5>
+    </div>
+    <div class="card-body">
+        <p class="card-text">Sign in with your Microsoft account to get an access token for your personal data and profile.</p>
+        <div class="mb-3">
+            <div class="mb-2">
+                <strong>Configured Scopes:</strong><br>
+                <% if (config.scopes && config.scopes.length > 0) { %>
+                    <% config.scopes.forEach(scope => { %>
+                        <span class="badge bg-success me-1 mb-1"><%= scope %></span>
+                    <% }); %>
+                <% } else { %>
+                    <span class="text-muted">No scopes configured. <a href="/config">Configure scopes</a> first.</span>
+                <% } %>
+            </div>
+            <small class="text-muted">
+                <i class="bi bi-info-circle"></i> Perfect for: Profile (/me), mail, calendar, files, and personal data access
+            </small>
+        </div>
+        <div class="text-center">
+            <a href="/api/auth/login" class="btn btn-success btn-lg" <% if (!config.clientId || !config.tenantId || !config.clientSecret) { %>disabled<% } %>>
+                <i class="bi bi-microsoft"></i> Sign In with Microsoft
+            </a>
+            <% if (!config.clientId || !config.tenantId || !config.clientSecret) { %>
+                <div class="mt-2">
+                    <small class="text-muted">Configure Azure AD credentials first in <a href="/config">Settings</a></small>
+                </div>
+            <% } %>
+        </div>
+    </div>
+</div>
+
+<!-- API Testing Section -->
+<div class="card mb-4">
+    <div class="card-header bg-info text-white">
+        <h5 class="mb-0"><i class="bi bi-cloud-arrow-up"></i> Test Azure APIs</h5>
+    </div>
+    <div class="card-body">
+        <% if (!config.clientId || !config.tenantId || !config.clientSecret) { %>
+            <div class="alert alert-warning">
+                <i class="bi bi-exclamation-triangle"></i>
+                Please configure your Azure AD credentials first to test APIs.
+            </div>
+        <% } else { %>
+            <form id="apiTestForm">
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label for="apiService" class="form-label">Quick API Services</label>
+                        <select class="form-select" id="apiService" onchange="loadApiService()">
+                            <option value="">Select a predefined API...</option>
+                        </select>
+                        <div class="form-text">Choose from common Microsoft Graph APIs</div>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="apiToken" class="form-label">Use Token</label>
+                        <select class="form-select" id="apiToken" required>
+                            <option value="">Select an active token...</option>
+                            <% if (tokens && tokens.length > 0) { %>
+                                <% tokens.forEach(token => { %>
+                                    <option value="<%= token.access_token %>">
+                                        Token #<%= token.id %> (expires <%= new Date(token.expires_at).toLocaleString() %>)
+                                    </option>
+                                <% }); %>
+                            <% } %>
+                        </select>
+                        <div class="form-text">Select token to authenticate the request</div>
+                    </div>
+                </div>
+                
+                <div class="row mb-3">
+                    <div class="col-md-3">
+                        <label for="apiMethod" class="form-label">HTTP Method</label>
+                        <select class="form-select" id="apiMethod" required>
+                            <option value="GET">GET</option>
+                            <option value="POST">POST</option>
+                            <option value="PUT">PUT</option>
+                            <option value="PATCH">PATCH</option>
+                            <option value="DELETE">DELETE</option>
+                        </select>
+                    </div>
+                    <div class="col-md-9">
+                        <label for="apiUrl" class="form-label">API Endpoint URL</label>
+                        <input type="url" class="form-control" id="apiUrl" required 
+                               placeholder="https://graph.microsoft.com/v1.0/me">
+                    </div>
+                </div>
+                
+                <!-- URL Parameters Section -->
+                <div class="mb-3" id="urlParametersSection" style="display: none;">
+                    <label class="form-label">URL Parameters</label>
+                    <div class="card">
+                        <div class="card-body">
+                            <div id="parametersList">
+                                <!-- Dynamic parameter inputs will appear here -->
+                            </div>
+                            <div class="form-text">
+                                <i class="bi bi-info-circle"></i> Fill in the parameter values and click "Apply Parameters" to update the URL
+                            </div>
+                            <button type="button" class="btn btn-sm btn-outline-primary mt-2" onclick="applyParameters()">
+                                <i class="bi bi-arrow-clockwise"></i> Apply Parameters
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="apiHeaders" class="form-label">Additional Headers (JSON)</label>
+                    <textarea class="form-control font-monospace" id="apiHeaders" rows="3" 
+                              placeholder='{"Content-Type": "application/json"}'></textarea>
+                    <div class="form-text">Optional additional headers as JSON object</div>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="apiBody" class="form-label">Request Body (JSON)</label>
+                    <textarea class="form-control font-monospace" id="apiBody" rows="4" 
+                              placeholder='{"key": "value"}'></textarea>
+                    <div class="form-text">Request body for POST/PUT/PATCH requests</div>
+                </div>
+                
+                <button type="submit" class="btn btn-primary" <% if (!tokens || tokens.length === 0) { %>disabled<% } %>>
+                    <i class="bi bi-send"></i> Send Request
+                </button>
+                <% if (!tokens || tokens.length === 0) { %>
+                    <small class="text-muted ms-2">Generate a token first</small>
+                <% } %>
+                <button type="button" class="btn btn-secondary ms-2" onclick="clearApiForm()">
+                    <i class="bi bi-x-circle"></i> Clear
+                </button>
+            </form>
+            
+            <div id="apiResult" class="mt-4"></div>
+        <% } %>
+    </div>
+</div>
+
+<!-- Active Tokens Table -->
+<div class="card">
+    <div class="card-header bg-secondary text-white">
+        <h5 class="mb-0"><i class="bi bi-list"></i> Active Tokens</h5>
+    </div>
+    <div class="card-body">
+        <% if (tokens && tokens.length > 0) { %>
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Client ID</th>
+                            <th>Token (Preview)</th>
+                            <th>Expires At</th>
+                            <th>Last Used</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% tokens.forEach(token => { %>
+                            <tr>
+                                <td><%= token.id %></td>
+                                <td><%= token.client_id.substring(0, 8) %>...</td>
+                                <td>
+                                    <span class="token-preview"><%= token.access_token.substring(0, 20) %>...</span>
+                                    <button class="btn btn-sm btn-outline-secondary" onclick="copyToken('<%= token.access_token %>')">
+                                        <i class="bi bi-clipboard"></i>
+                                    </button>
+                                </td>
+                                <td>
+                                    <% 
+                                        const now = new Date();
+                                        const expiresAt = new Date(token.expires_at);
+                                        const diffMs = expiresAt - now;
+                                        const diffMins = Math.round(diffMs / 60000);
+                                        const diffHours = Math.round(diffMs / 3600000);
+                                        const diffDays = Math.round(diffMs / 86400000);
+                                        
+                                        let timeDisplay;
+                                        if (diffMs < 0) {
+                                            timeDisplay = '<span class="text-danger">Expired</span>';
+                                        } else if (diffMins < 1) {
+                                            timeDisplay = '<span class="text-danger">Less than 1 minute</span>';
+                                        } else if (diffMins < 60) {
+                                            timeDisplay = `<span class="text-warning">${diffMins} minute${diffMins === 1 ? '' : 's'}</span>`;
+                                        } else if (diffHours < 24) {
+                                            timeDisplay = `<span class="text-success">${diffHours} hour${diffHours === 1 ? '' : 's'}</span>`;
+                                        } else {
+                                            timeDisplay = `<span class="text-success">${diffDays} day${diffDays === 1 ? '' : 's'}</span>`;
+                                        }
+                                    %>
+                                    <%- timeDisplay %>
+                                    <small class="text-muted d-block"><%= expiresAt.toLocaleString() %></small>
+                                </td>
+                                <td><%= token.last_used ? new Date(token.last_used).toLocaleString() : 'Never' %></td>
+                                <td>
+                                    <button class="btn btn-sm btn-warning" onclick="refreshToken(<%= token.id %>)">
+                                        <i class="bi bi-arrow-clockwise"></i> Refresh
+                                    </button>
+                                    <button class="btn btn-sm btn-danger" onclick="revokeToken(<%= token.id %>)">
+                                        <i class="bi bi-x-circle"></i> Revoke
+                                    </button>
+                                </td>
+                            </tr>
+                        <% }); %>
+                    </tbody>
+                </table>
+            </div>
+        <% } else { %>
+            <p class="text-muted">No active tokens found. Generate a new token to get started.</p>
+        <% } %>
+    </div>
+</div>
+
+<!-- Usage Modal -->
+<div class="modal fade" id="usageModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Token Usage History</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="usageModalBody">
+                Loading...
+            </div>
+        </div>
+    </div>
+</div>

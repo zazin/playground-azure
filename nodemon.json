@@ -1,0 +1,18 @@
+{
+  "watch": [
+    "src/**/*",
+    "views/**/*",
+    "public/**/*",
+    "config.json"
+  ],
+  "ext": "js,json,ejs,css,html",
+  "ignore": [
+    "node_modules/**/*",
+    "*.log",
+    "dist/**/*"
+  ],
+  "env": {
+    "NODE_ENV": "development"
+  },
+  "delay": 1000
+}

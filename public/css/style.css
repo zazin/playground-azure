@@ -1,0 +1,182 @@
+body {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+main {
+    flex: 1;
+}
+
+.footer {
+    margin-top: auto;
+}
+
+.token-preview {
+    font-family: 'Courier New', monospace;
+    font-size: 0.9em;
+}
+
+.card {
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    margin-bottom: 1.5rem;
+}
+
+.card-header {
+    font-weight: 600;
+}
+
+.navbar-brand {
+    font-weight: bold;
+}
+
+.table th {
+    border-top: none;
+    font-weight: 600;
+}
+
+.badge {
+    padding: 0.35em 0.65em;
+}
+
+.btn-sm {
+    margin: 0 2px;
+}
+
+.display-6 {
+    font-size: 2.5rem;
+}
+
+.alert {
+    border-radius: 0.375rem;
+}
+
+.modal-body pre {
+    background-color: #f8f9fa;
+    padding: 1rem;
+    border-radius: 0.375rem;
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.toast-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 1050;
+}
+
+.spinner-border {
+    width: 1rem;
+    height: 1rem;
+    border-width: 0.15em;
+}
+
+/* API Testing Styles */
+.response-body {
+    border-radius: 0.375rem;
+    border: 1px solid #dee2e6;
+}
+
+.response-body pre {
+    margin: 0;
+    font-size: 0.8rem;
+    line-height: 1.4;
+}
+
+.response-body code {
+    background: none;
+    color: inherit;
+    font-size: inherit;
+}
+
+#apiTestForm textarea {
+    resize: vertical;
+    min-height: 80px;
+}
+
+#apiTestForm .font-monospace {
+    font-family: 'Courier New', Consolas, Monaco, monospace;
+    font-size: 0.9rem;
+}
+
+.api-response-card {
+    border: none;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+}
+
+.api-response-card .card-header {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.api-response-success {
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+}
+
+.api-response-error {
+    background: linear-gradient(135deg, #dc3545 0%, #fd7e14 100%);
+}
+
+.api-method-badge {
+    font-weight: bold;
+    font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.25rem;
+}
+
+.api-method-get { background-color: #28a745; }
+.api-method-post { background-color: #007bff; }
+.api-method-put { background-color: #ffc107; color: #212529; }
+.api-method-patch { background-color: #17a2b8; }
+.api-method-delete { background-color: #dc3545; }
+
+/* Syntax highlighting for JSON */
+.json-string { color: #032f62; }
+.json-number { color: #005cc5; }
+.json-boolean { color: #d73a49; }
+.json-null { color: #6f42c1; }
+.json-key { color: #22863a; font-weight: bold; }
+
+/* API service selector */
+#apiService optgroup {
+    font-weight: bold;
+    font-style: normal;
+}
+
+#apiService option {
+    font-weight: normal;
+    padding-left: 1rem;
+}
+
+/* Spin animation for refresh button */
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+.spin {
+    animation: spin 1s linear infinite;
+}
+
+@media (max-width: 768px) {
+    .display-6 {
+        font-size: 1.75rem;
+    }
+    
+    .table-responsive {
+        font-size: 0.875rem;
+    }
+    
+    .btn-sm {
+        font-size: 0.75rem;
+        padding: 0.25rem 0.5rem;
+    }
+    
+    .response-body {
+        max-height: 250px !important;
+    }
+    
+    #apiTestForm .row {
+        margin-bottom: 1rem;
+    }
+}
