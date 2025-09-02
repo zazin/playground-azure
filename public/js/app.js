@@ -2311,4 +2311,201 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Initialize query parameter detection
     detectQueryParameters();
+    
+    // Check for original token response display
+    checkForOriginalTokenResponse();
 });
+
+// Generic function to add copy buttons to any JSON viewer
+function addJsonCopyButtons(containerId = '#jsonViewer') {
+    // Add copy buttons to keys in the JSON viewer
+    $(containerId).find('.json-key').each(function() {
+        const $elem = $(this);
+        
+        // Skip if already has a copy button
+        if ($elem.next('.copy-btn-key').length > 0) {
+            return;
+        }
+        
+        const keyText = $elem.text().replace(/['"]/g, '');
+        
+        const $copyBtn = $('<button class="btn btn-link btn-sm copy-btn-key p-0 ms-1" title="Copy key" style="font-size: 0.8rem; opacity: 0.7; color: #007bff; background: rgba(0,123,255,0.1); border-radius: 3px; padding: 1px 3px!important;">');
+        $copyBtn.html('<i class="bi bi-clipboard"></i>');
+        
+        $copyBtn.hover(
+            function() {
+                $(this).css({
+                    'opacity': '1',
+                    'background': 'rgba(0,123,255,0.2)',
+                    'transform': 'scale(1.1)'
+                });
+            },
+            function() {
+                $(this).css({
+                    'opacity': '0.7',
+                    'background': 'rgba(0,123,255,0.1)',
+                    'transform': 'scale(1.0)'
+                });
+            }
+        );
+        
+        $copyBtn.on('click', function(e) {
+            e.stopPropagation();
+            e.preventDefault();
+            
+            navigator.clipboard.writeText(keyText).then(() => {
+                const $icon = $(this).find('i');
+                const originalIcon = $icon.attr('class');
+                $icon.attr('class', 'bi bi-check text-success');
+                
+                setTimeout(() => {
+                    $icon.attr('class', originalIcon);
+                }, 1000);
+                
+                showToast(`Key "${keyText}" copied to clipboard`, 'success');
+            }).catch(err => {
+                showToast('Failed to copy key', 'danger');
+            });
+        });
+        
+        $elem.after($copyBtn);
+    });
+    
+    // Add copy buttons to values in the JSON viewer
+    $(containerId).find('.json-string, .json-literal').each(function() {
+        const $elem = $(this);
+        
+        // Skip if already has a copy button
+        if ($elem.next('.copy-btn').length > 0) {
+            return;
+        }
+        
+        // Skip very long strings to avoid UI issues
+        const valueText = $elem.text();
+        if (valueText.length > 200) {
+            return;
+        }
+        
+        // Clean the value (remove quotes from strings)
+        let cleanValue = valueText;
+        if ($elem.hasClass('json-string')) {
+            cleanValue = valueText.replace(/^"/, '').replace(/"$/, '');
+        }
+        
+        const $copyBtn = $('<button class="btn btn-link btn-sm copy-btn p-0 ms-1" title="Copy value" style="font-size: 0.8rem; opacity: 0.7; color: #28a745; background: rgba(40,167,69,0.1); border-radius: 3px; padding: 1px 3px!important;">');
+        $copyBtn.html('<i class="bi bi-clipboard"></i>');
+        
+        $copyBtn.hover(
+            function() {
+                $(this).css({
+                    'opacity': '1',
+                    'background': 'rgba(40,167,69,0.2)',
+                    'transform': 'scale(1.1)'
+                });
+            },
+            function() {
+                $(this).css({
+                    'opacity': '0.7',
+                    'background': 'rgba(40,167,69,0.1)',
+                    'transform': 'scale(1.0)'
+                });
+            }
+        );
+        
+        $copyBtn.on('click', function(e) {
+            e.stopPropagation();
+            e.preventDefault();
+            
+            navigator.clipboard.writeText(cleanValue).then(() => {
+                const $icon = $(this).find('i');
+                const originalIcon = $icon.attr('class');
+                $icon.attr('class', 'bi bi-check text-success');
+                
+                setTimeout(() => {
+                    $icon.attr('class', originalIcon);
+                }, 1000);
+                
+                showToast(`Value copied to clipboard`, 'success');
+            }).catch(err => {
+                showToast('Failed to copy value', 'danger');
+            });
+        });
+        
+        $elem.after($copyBtn);
+    });
+}
+
+// Display original token response after authorization
+function displayOriginalTokenResponse(response) {
+    const requestResponseArea = document.getElementById('requestResponse');
+    if (!requestResponseArea || !response) return;
+    
+    // Create response display HTML
+    const responseHTML = `
+        <div class="api-response">
+            <div class="response-header">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <h6 class="mb-0 text-success">
+                        <i class="bi bi-check-circle-fill"></i> Authorization Success
+                    </h6>
+                    <div class="response-actions">
+                        <button class="btn btn-sm btn-outline-primary me-1" onclick="copyFullResponse()">
+                            <i class="bi bi-clipboard"></i> Copy All JSON
+                        </button>
+                        <button class="btn btn-sm btn-outline-success me-1" onclick="copyPrettyResponse()">
+                            <i class="bi bi-clipboard-plus"></i> Copy Pretty JSON
+                        </button>
+                        <button class="btn btn-sm btn-outline-secondary" onclick="toggleJsonExpansion()">
+                            <i class="bi bi-arrows-expand" id="expandIcon"></i> <span id="expandText">Expand All</span>
+                        </button>
+                    </div>
+                </div>
+                <div class="response-metadata">
+                    <span class="badge bg-success me-2">OAuth2 Token Response</span>
+                    <span class="badge bg-info me-2">Authorization Code Flow</span>
+                    <small class="text-muted">
+                        <i class="bi bi-clock"></i> ${new Date().toLocaleString()}
+                    </small>
+                </div>
+            </div>
+            <div class="response-body">
+                <div id="jsonViewer" class="json-response"></div>
+            </div>
+        </div>
+    `;
+    
+    requestResponseArea.innerHTML = responseHTML;
+    
+    // Store response globally for copy functions
+    window.currentApiResponse = response;
+    
+    // Initialize JSON viewer with copy buttons
+    $('#jsonViewer').jsonViewer(response, {
+        collapsed: false,
+        rootCollapsible: false,
+        withQuotes: true,
+        withLinks: false
+    });
+    
+    // Add copy buttons to JSON values
+    setTimeout(() => {
+        addJsonCopyButtons();
+    }, 100);
+    
+    showToast('🎉 Authorization successful! Original token response displayed below.', 'success');
+}
+
+// Check for original token response on page load
+function checkForOriginalTokenResponse() {
+    // Check URL parameters for show_response flag
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('show_response') === 'true') {
+        // The response should be available from the server-side template
+        if (window.originalTokenResponse) {
+            displayOriginalTokenResponse(window.originalTokenResponse);
+            
+            // Clean up URL parameters
+            window.history.replaceState({}, document.title, window.location.pathname);
+        }
+    }
+}

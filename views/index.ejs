@@ -258,3 +258,8 @@
     </div>
 </div>
 
+<% if (originalTokenResponse) { %>
+<script>
+    window.originalTokenResponse = <%- JSON.stringify(originalTokenResponse) %>;
+</script>
+<% } %>

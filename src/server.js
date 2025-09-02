@@ -56,10 +56,18 @@ app.get('/', async (req, res) => {
     const tokens = allTokens.length > 0 ? [allTokens[0]] : [];
     const stats = await storage.getTokenStatistics();
     const config = await storage.getConfiguration();
-    res.render('index', { tokens, stats, config });
+    
+    // Get original token response from session if available
+    const originalTokenResponse = req.session.originalTokenResponse || null;
+    // Clear it from session after retrieving
+    if (req.session.originalTokenResponse) {
+      delete req.session.originalTokenResponse;
+    }
+    
+    res.render('index', { tokens, stats, config, originalTokenResponse });
   } catch (error) {
     console.error('Error loading dashboard:', error);
-    res.render('index', { tokens: [], stats: {}, config: {}, error: error.message });
+    res.render('index', { tokens: [], stats: {}, config: {}, error: error.message, originalTokenResponse: null });
   }
 });
 
@@ -198,10 +206,29 @@ app.get('/api/auth/callback', async (req, res) => {
       
       const dbResult = await storage.saveToken(tokenInfo);
       
+      // Store the original response for display
+      req.session.originalTokenResponse = {
+        access_token: response.accessToken,
+        token_type: response.tokenType || 'Bearer',
+        expires_in: Math.floor((response.expiresOn.getTime() - Date.now()) / 1000),
+        expires_on: response.expiresOn.toISOString(),
+        scope: response.scopes.join(' '),
+        account: {
+          homeAccountId: response.account?.homeAccountId,
+          environment: response.account?.environment,
+          tenantId: response.account?.tenantId,
+          username: response.account?.username,
+          localAccountId: response.account?.localAccountId,
+          name: response.account?.name
+        },
+        flow_type: 'authorization_code',
+        client_id: config.clientId
+      };
+      
       console.log('✅ Successfully obtained user access token');
       
       // Redirect to home page with success message
-      res.redirect('/?auth=success');
+      res.redirect('/?auth=success&show_response=true');
     }
   } catch (error) {
     console.error('Error exchanging code for token:', error);
