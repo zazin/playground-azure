@@ -1,0 +1,59 @@
+name: Publish to NPM
+
+on:
+  release:
+    types: [published]
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests (if available)
+        run: npm test --if-present
+
+      - name: Build package (if needed)
+        run: npm run build --if-present
+
+      - name: Check package contents
+        run: npm pack --dry-run
+
+      - name: Publish to NPM
+        run: npm publish --provenance --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+  test-install:
+    needs: publish
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Test global installation
+        run: |
+          # Wait a bit for npm to propagate
+          sleep 30
+          # Test that the package can be installed and run
+          npx playground-azure@latest --help
+
+      - name: Verify CLI functionality
+        run: |
+          # Test CLI help command works
+          timeout 10 npx playground-azure@latest --help || exit 0

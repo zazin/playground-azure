@@ -1,0 +1,90 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [18, 20, 21]
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests (if available)
+        run: npm test --if-present
+
+      - name: Check CLI help command
+        run: ./bin/cli.js --help
+
+      - name: Verify package can be packed
+        run: npm pack --dry-run
+
+      - name: Check package structure
+        run: |
+          echo "Checking required files exist..."
+          test -f bin/cli.js
+          test -f src/server.js
+          test -f views/index.ejs
+          test -f public/js/app.js
+          test -f README.md
+          echo "✅ All required files present"
+
+  lint:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run linter (if configured)
+        run: npm run lint --if-present
+
+      - name: Check package.json validity
+        run: npm pkg fix --dry-run
+
+  security:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run security audit
+        run: npm audit --audit-level=moderate
+
+      - name: Check for vulnerable dependencies
+        run: npm audit --audit-level=high --production
