@@ -69,11 +69,8 @@
                     </div>
                 </div>
 
-                <!-- Custom Scopes Input -->
-                <div class="custom-scopes">
-                    <label for="customScopes" class="form-label">Input scopes</label>
-                    <input type="text" id="customScopes" class="form-control" placeholder="https://graph.microsoft.com/.default" value="<%= (config.scopes && config.scopes.length > 0) ? config.scopes.join(' ') : '' %>">
-                </div>
+                <!-- Hidden input for scopes (populated by checkboxes) -->
+                <input type="hidden" id="customScopes" value="<%= (config.scopes && config.scopes.length > 0) ? config.scopes.join(' ') : '' %>">
 
                 <!-- Configuration Fields -->
                 <div class="config-section">
