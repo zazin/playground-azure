@@ -189,7 +189,7 @@
                 <div class="api-request-form">
                     <div class="form-group">
                         <label class="form-label">HTTP Method</label>
-                        <select id="httpMethod" class="form-select">
+                        <select id="httpMethod" class="form-select" onchange="toggleRequestBody()">
                             <option value="GET">GET</option>
                             <option value="POST">POST</option>
                             <option value="PATCH">PATCH</option>
@@ -200,12 +200,42 @@
                         <label class="form-label">Request URI</label>
                         <div class="uri-input">
                             <span class="uri-base">https://graph.microsoft.com/v1.0</span>
-                            <input type="text" id="requestUri" class="form-control" placeholder="/me" value="/me">
+                            <input type="text" id="requestUri" class="form-control" placeholder="/me" value="/me" onchange="detectUriParameters(); detectQueryParameters();">
+                            <button type="button" id="queryParamBtn" class="btn btn-outline-secondary btn-sm" onclick="toggleQueryEditor()" style="display: none;" title="Edit Query Parameters">
+                                <i class="bi bi-pencil-square"></i>
+                            </button>
                         </div>
                     </div>
-                    <div class="form-group">
+                    
+                    <!-- Dynamic URI Parameters Section -->
+                    <div id="uriParametersSection" class="form-group" style="display: none;">
+                        <label class="form-label">URI Parameters</label>
+                        <div id="uriParametersList" class="uri-parameters-container">
+                            <!-- Dynamic parameter fields will be added here -->
+                        </div>
+                        <button type="button" class="btn btn-sm btn-outline-primary mt-2" onclick="applyUriParameters()">
+                            <i class="bi bi-arrow-repeat"></i> Apply Parameters to URI
+                        </button>
+                    </div>
+                    
+                    <!-- Query Parameters Editor Section -->
+                    <div id="queryParametersSection" class="form-group" style="display: none;">
+                        <label class="form-label">Query Parameters</label>
+                        <div id="queryParametersList" class="query-parameters-container">
+                            <!-- Dynamic query parameter fields will be added here -->
+                        </div>
+                        <div class="query-param-actions mt-2">
+                            <button type="button" class="btn btn-sm btn-outline-success me-1" onclick="addQueryParameter()">
+                                <i class="bi bi-plus-circle"></i> Add Parameter
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-primary" onclick="applyQueryParameters()">
+                                <i class="bi bi-arrow-repeat"></i> Apply to URI
+                            </button>
+                        </div>
+                    </div>
+                    <div id="requestBodySection" class="form-group" style="display: none;">
                         <label class="form-label">Request body</label>
-                        <textarea id="requestBody" class="form-control" rows="4" placeholder="Enter request body (JSON)"></textarea>
+                        <textarea id="requestBody" class="form-control" rows="8" placeholder="Enter request body (JSON)"></textarea>
                     </div>
                     <button class="btn btn-primary send-btn" onclick="sendAPIRequest()">
                         <i class="bi bi-send"></i> Send the request

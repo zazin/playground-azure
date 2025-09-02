@@ -1532,6 +1532,264 @@ function copyToken(token) {
         .catch(() => showToast('❌ Failed to copy token', 'danger'));
 }
 
+// URI Parameter Management Functions
+function detectUriParameters() {
+    const uriInput = document.getElementById('requestUri');
+    const parametersSection = document.getElementById('uriParametersSection');
+    const parametersList = document.getElementById('uriParametersList');
+    
+    if (!uriInput || !parametersSection || !parametersList) return;
+    
+    const uri = uriInput.value;
+    
+    // Find parameters in URI (pattern: {param-name})
+    const parameterRegex = /\{([^}]+)\}/g;
+    const parameters = [];
+    let match;
+    
+    while ((match = parameterRegex.exec(uri)) !== null) {
+        if (!parameters.includes(match[1])) {
+            parameters.push(match[1]);
+        }
+    }
+    
+    // Clear existing parameters
+    parametersList.innerHTML = '';
+    
+    if (parameters.length > 0) {
+        // Show parameters section
+        parametersSection.style.display = 'block';
+        
+        // Create input fields for each parameter
+        parameters.forEach(param => {
+            const paramField = document.createElement('div');
+            paramField.className = 'uri-parameter-field';
+            
+            paramField.innerHTML = `
+                <div class="uri-parameter-label">{${param}}</div>
+                <input type="text" class="uri-parameter-input" 
+                       data-param="${param}" 
+                       placeholder="Enter ${param} value"
+                       title="Value for ${param} parameter">
+                <div class="uri-parameter-help">Replace {${param}} in URI</div>
+            `;
+            
+            parametersList.appendChild(paramField);
+        });
+    } else {
+        // Hide parameters section
+        parametersSection.style.display = 'none';
+    }
+}
+
+function applyUriParameters() {
+    const uriInput = document.getElementById('requestUri');
+    const parameterInputs = document.querySelectorAll('.uri-parameter-input');
+    
+    if (!uriInput) return;
+    
+    let uri = uriInput.value;
+    let appliedCount = 0;
+    
+    parameterInputs.forEach(input => {
+        const paramName = input.dataset.param;
+        const paramValue = input.value.trim();
+        
+        if (paramValue) {
+            // Replace {param-name} with the actual value
+            const oldUri = uri;
+            uri = uri.replace(`{${paramName}}`, encodeURIComponent(paramValue));
+            if (oldUri !== uri) {
+                appliedCount++;
+            }
+        }
+    });
+    
+    // Update the URI input
+    uriInput.value = uri;
+    
+    if (appliedCount > 0) {
+        showToast(`✅ Applied ${appliedCount} parameter(s) to URI`, 'success');
+    } else {
+        showToast('⚠️ No parameters to apply or values are empty', 'warning');
+    }
+}
+
+function toggleRequestBody() {
+    const httpMethod = document.getElementById('httpMethod').value;
+    const requestBodySection = document.getElementById('requestBodySection');
+    
+    if (!requestBodySection) return;
+    
+    // Show request body for methods that typically have a body
+    const methodsWithBody = ['POST', 'PATCH', 'PUT'];
+    
+    if (methodsWithBody.includes(httpMethod)) {
+        requestBodySection.style.display = 'block';
+    } else {
+        requestBodySection.style.display = 'none';
+        // Clear the request body when hiding
+        const requestBody = document.getElementById('requestBody');
+        if (requestBody) {
+            requestBody.value = '';
+        }
+    }
+}
+
+// Query Parameter Management Functions
+function detectQueryParameters() {
+    const uriInput = document.getElementById('requestUri');
+    const queryParamBtn = document.getElementById('queryParamBtn');
+    
+    if (!uriInput || !queryParamBtn) return;
+    
+    const uri = uriInput.value;
+    const hasQueryParams = uri.includes('?');
+    
+    // Show/hide the edit query parameters button
+    if (hasQueryParams) {
+        queryParamBtn.style.display = 'block';
+    } else {
+        queryParamBtn.style.display = 'none';
+        // Hide query editor if no params
+        const querySection = document.getElementById('queryParametersSection');
+        if (querySection) {
+            querySection.style.display = 'none';
+        }
+    }
+}
+
+function toggleQueryEditor() {
+    const querySection = document.getElementById('queryParametersSection');
+    const uriInput = document.getElementById('requestUri');
+    
+    if (!querySection || !uriInput) return;
+    
+    const isVisible = querySection.style.display === 'block';
+    
+    if (isVisible) {
+        querySection.style.display = 'none';
+    } else {
+        querySection.style.display = 'block';
+        parseQueryParametersFromUri();
+    }
+}
+
+function parseQueryParametersFromUri() {
+    const uriInput = document.getElementById('requestUri');
+    const parametersList = document.getElementById('queryParametersList');
+    
+    if (!uriInput || !parametersList) return;
+    
+    const uri = uriInput.value;
+    const queryStartIndex = uri.indexOf('?');
+    
+    if (queryStartIndex === -1) return;
+    
+    // Clear existing parameters
+    parametersList.innerHTML = '';
+    
+    const queryString = uri.substring(queryStartIndex + 1);
+    const params = new URLSearchParams(queryString);
+    
+    // Create input fields for existing parameters
+    params.forEach((value, key) => {
+        addQueryParameterField(key, value);
+    });
+    
+    // Add empty field for new parameter
+    if (params.size === 0) {
+        addQueryParameterField('', '');
+    }
+}
+
+function addQueryParameter() {
+    addQueryParameterField('', '');
+}
+
+function addQueryParameterField(key = '', value = '') {
+    const parametersList = document.getElementById('queryParametersList');
+    if (!parametersList) return;
+    
+    const paramField = document.createElement('div');
+    paramField.className = 'query-parameter-field';
+    
+    paramField.innerHTML = `
+        <input type="text" class="query-param-key" 
+               placeholder="Parameter name" 
+               value="${key}"
+               title="Parameter name (e.g., $top, $filter)">
+        <span style="color: #6c757d; font-size: 12px;">=</span>
+        <input type="text" class="query-param-value" 
+               placeholder="Parameter value" 
+               value="${value}"
+               title="Parameter value">
+        <button type="button" class="query-param-remove" onclick="removeQueryParameter(this)" title="Remove parameter">
+            <i class="bi bi-x"></i>
+        </button>
+    `;
+    
+    parametersList.appendChild(paramField);
+}
+
+function removeQueryParameter(button) {
+    const paramField = button.closest('.query-parameter-field');
+    if (paramField) {
+        paramField.remove();
+    }
+}
+
+function applyQueryParameters() {
+    const uriInput = document.getElementById('requestUri');
+    const parametersList = document.getElementById('queryParametersList');
+    
+    if (!uriInput || !parametersList) return;
+    
+    let uri = uriInput.value;
+    
+    // Remove existing query parameters
+    const queryStartIndex = uri.indexOf('?');
+    if (queryStartIndex !== -1) {
+        uri = uri.substring(0, queryStartIndex);
+    }
+    
+    // Collect all parameter fields
+    const paramFields = parametersList.querySelectorAll('.query-parameter-field');
+    const params = new URLSearchParams();
+    let validParamCount = 0;
+    
+    paramFields.forEach(field => {
+        const keyInput = field.querySelector('.query-param-key');
+        const valueInput = field.querySelector('.query-param-value');
+        
+        if (keyInput && valueInput) {
+            const key = keyInput.value.trim();
+            const value = valueInput.value.trim();
+            
+            if (key) {
+                params.append(key, value);
+                validParamCount++;
+            }
+        }
+    });
+    
+    // Build final URI
+    if (validParamCount > 0) {
+        uri += '?' + params.toString();
+    }
+    
+    uriInput.value = uri;
+    
+    // Update query button visibility
+    detectQueryParameters();
+    
+    if (validParamCount > 0) {
+        showToast(`✅ Applied ${validParamCount} query parameter(s) to URI`, 'success');
+    } else {
+        showToast('✅ Removed all query parameters from URI', 'info');
+    }
+}
+
 function loadSelectedAPI() {
     const selector = document.getElementById('apiSelector');
     const selectedValue = selector.value;
@@ -1661,6 +1919,15 @@ function loadSelectedAPI() {
         document.getElementById('httpMethod').value = config.method;
         document.getElementById('requestUri').value = config.uri;
         document.getElementById('requestBody').value = config.body;
+        
+        // Detect URI parameters after loading the API template
+        detectUriParameters();
+        
+        // Detect query parameters after loading the API template
+        detectQueryParameters();
+        
+        // Toggle request body visibility based on method
+        toggleRequestBody();
         
         showToast('✅ API template loaded: ' + selector.options[selector.selectedIndex].text, 'success');
     }
@@ -2038,4 +2305,10 @@ document.addEventListener('DOMContentLoaded', () => {
     if (document.getElementById('tokenExpiration')) {
         startTokenExpirationTimer();
     }
+    
+    // Initialize request body visibility based on default method
+    toggleRequestBody();
+    
+    // Initialize query parameter detection
+    detectQueryParameters();
 });
