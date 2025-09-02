@@ -1,6 +1,6 @@
 {
   "name": "playground-azure",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "OAuth2 Azure Playground - Interactive web application for testing Microsoft Graph APIs",
   "main": "src/server.js",
   "bin": {
