@@ -158,6 +158,155 @@ main {
     animation: spin 1s linear infinite;
 }
 
+/* Step-by-Step Design */
+.step-indicator {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    position: relative;
+}
+
+.step-indicator.active {
+    background-color: #007bff;
+    color: white;
+}
+
+.step-indicator.completed {
+    background-color: #28a745;
+    color: white;
+}
+
+.step-indicator.pending {
+    background-color: #6c757d;
+    color: white;
+}
+
+.step-line {
+    width: 80px;
+    height: 2px;
+    background-color: #dee2e6;
+    margin: 0 10px;
+}
+
+.step-badge {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background-color: rgba(255, 255, 255, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 1.1rem;
+}
+
+/* API Cards */
+.api-card {
+    display: flex;
+    align-items: center;
+    padding: 1rem;
+    border: 2px solid #e9ecef;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    background: white;
+}
+
+.api-card:hover {
+    border-color: #007bff;
+    box-shadow: 0 0.25rem 0.5rem rgba(0, 123, 255, 0.15);
+    transform: translateY(-2px);
+}
+
+.api-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.5rem;
+    margin-right: 1rem;
+    flex-shrink: 0;
+}
+
+.api-content {
+    flex: 1;
+}
+
+.api-content h6 {
+    margin: 0;
+    color: #333;
+    font-weight: 600;
+}
+
+.api-content small {
+    font-family: 'Courier New', monospace;
+}
+
+.api-action {
+    color: #6c757d;
+    font-size: 1.2rem;
+    margin-left: auto;
+}
+
+/* Pulse Animation */
+.pulse-button {
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(40, 167, 69, 0.7);
+    }
+    70% {
+        box-shadow: 0 0 0 10px rgba(40, 167, 69, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(40, 167, 69, 0);
+    }
+}
+
+/* Enhanced Cards */
+.card.shadow-sm {
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075) !important;
+    border: none;
+}
+
+.card-header.bg-primary,
+.card-header.bg-success,
+.card-header.bg-info {
+    border: none;
+}
+
+/* Form Improvements */
+.form-control-lg {
+    font-size: 1rem;
+    padding: 0.75rem 1rem;
+}
+
+.form-label.fw-bold {
+    color: #495057;
+    margin-bottom: 0.5rem;
+}
+
+.form-label i {
+    margin-right: 0.5rem;
+}
+
+/* Badge Improvements */
+.badge.bg-success,
+.badge.bg-secondary {
+    font-size: 0.8rem;
+    padding: 0.5rem 0.75rem;
+}
+
+/* Responsive Design */
 @media (max-width: 768px) {
     .display-6 {
         font-size: 1.75rem;
@@ -178,5 +327,25 @@ main {
     
     #apiTestForm .row {
         margin-bottom: 1rem;
+    }
+
+    .step-line {
+        width: 40px;
+    }
+    
+    .api-card {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .api-icon {
+        margin-right: 0;
+        margin-bottom: 0.5rem;
+    }
+    
+    .step-indicator {
+        width: 32px;
+        height: 32px;
+        font-size: 0.9rem;
     }
 }
