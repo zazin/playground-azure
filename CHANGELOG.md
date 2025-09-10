@@ -2,7 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
-## [2025-01-10] - Latest
+## [1.1.0] - 2025-01-10
+
+### Added
+- OneDrive Files.Read scope support in step 1
+- 12 OneDrive API endpoints for file and folder operations
+- OneDrive API examples in step 3 selector
+- Read-only file operations: browse, search, download, thumbnails
+
+### Fixed
+- Missing toggleStep function causing JavaScript errors
+- UI accordion behavior for step navigation
+
+## [1.0.1] - 2025-01-10 - Previous
 
 ### Changed
 - Split large `app.js` file (2567 lines) into smaller modules:

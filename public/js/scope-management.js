@@ -303,6 +303,7 @@ function updateCustomScopes() {
             'Calendars.ReadWrite': 'https://graph.microsoft.com/Calendars.ReadWrite',
             'Contacts.Read': 'https://graph.microsoft.com/Contacts.Read',
             'People.Read': 'https://graph.microsoft.com/People.Read',
+            'Files.Read': 'https://graph.microsoft.com/Files.Read',
             'Chat.Read': 'https://graph.microsoft.com/Chat.Read',
             'Chat.ReadWrite': 'https://graph.microsoft.com/Chat.ReadWrite',
             'offline_access (Refresh Token)': 'offline_access'

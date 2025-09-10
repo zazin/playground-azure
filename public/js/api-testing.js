@@ -511,6 +511,33 @@ function loadSelectedAPI() {
             method: 'GET',
             uri: '/me/chats/{chat-id}/messages?$top=10',
             body: ''
+        },
+        
+        // OneDrive APIs (Read-only)
+        'drive-info': {
+            method: 'GET',
+            uri: '/me/drive',
+            body: ''
+        },
+        'drive-root': {
+            method: 'GET',
+            uri: '/me/drive/root/children',
+            body: ''
+        },
+        'drive-recent': {
+            method: 'GET',
+            uri: '/me/drive/recent',
+            body: ''
+        },
+        'drive-search': {
+            method: 'GET',
+            uri: '/me/drive/root/search(q=\'document\')',
+            body: ''
+        },
+        'drive-shared': {
+            method: 'GET',
+            uri: '/me/drive/sharedWithMe',
+            body: ''
         }
     };
     

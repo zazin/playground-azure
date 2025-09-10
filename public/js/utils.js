@@ -370,6 +370,7 @@ function loadSavedConfiguration() {
             'https://graph.microsoft.com/Calendars.ReadWrite': 'calendars-readwrite',
             'https://graph.microsoft.com/Contacts.Read': 'contacts-read',
             'https://graph.microsoft.com/People.Read': 'people-read',
+            'https://graph.microsoft.com/Files.Read': 'files-read',
             'https://graph.microsoft.com/Chat.Read': 'chat-read',
             'https://graph.microsoft.com/Chat.ReadWrite': 'chat-readwrite'
         };
@@ -446,6 +447,46 @@ function startTokenExpirationTimer() {
     updateTokenExpiration();
     // Update every 30 seconds
     setInterval(updateTokenExpiration, 30000);
+}
+
+// UI Toggle Functions
+function toggleStep(stepNumber) {
+    const stepSection = document.querySelector(`#step${stepNumber}`);
+    if (!stepSection) return;
+    
+    const stepHeader = stepSection.querySelector('.step-header');
+    const stepContent = stepSection.querySelector('.step-content');
+    const toggle = stepHeader.querySelector('.step-toggle');
+    
+    // Check if step is disabled
+    if (stepHeader.classList.contains('disabled')) {
+        return;
+    }
+    
+    const isCurrentlyHidden = stepContent.style.display === 'none' || 
+                              window.getComputedStyle(stepContent).display === 'none';
+    
+    // Close all other steps first (accordion behavior)
+    const allSteps = document.querySelectorAll('.step-section');
+    allSteps.forEach(step => {
+        if (step.id !== `step${stepNumber}`) {
+            const content = step.querySelector('.step-content');
+            const stepToggle = step.querySelector('.step-toggle');
+            if (content && stepToggle) {
+                content.style.display = 'none';
+                stepToggle.textContent = '▶';
+            }
+        }
+    });
+    
+    // Toggle the clicked step
+    if (isCurrentlyHidden) {
+        stepContent.style.display = 'block';
+        toggle.textContent = '▼';
+    } else {
+        stepContent.style.display = 'none';
+        toggle.textContent = '▶';
+    }
 }
 
 // Contact and Donate Functions

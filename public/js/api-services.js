@@ -342,6 +342,113 @@ const API_SERVICES = [
             }
         },
         description: 'Send a message to a chat'
+    },
+    
+    // OneDrive/Files Endpoints
+    {
+        name: 'Get My Drive',
+        category: 'OneDrive',
+        method: 'GET',
+        url: 'https://graph.microsoft.com/v1.0/me/drive',
+        headers: {},
+        body: null,
+        description: 'Get information about your OneDrive'
+    },
+    {
+        name: 'Get Root Folder Items',
+        category: 'OneDrive',
+        method: 'GET',
+        url: 'https://graph.microsoft.com/v1.0/me/drive/root/children',
+        headers: {},
+        body: null,
+        description: 'Get files and folders in your OneDrive root'
+    },
+    {
+        name: 'Get Recent Files',
+        category: 'OneDrive',
+        method: 'GET',
+        url: 'https://graph.microsoft.com/v1.0/me/drive/recent',
+        headers: {},
+        body: null,
+        description: 'Get recently accessed files from OneDrive'
+    },
+    {
+        name: 'Search Files',
+        category: 'OneDrive',
+        method: 'GET',
+        url: 'https://graph.microsoft.com/v1.0/me/drive/root/search(q=\'document\')',
+        headers: {},
+        body: null,
+        description: 'Search for files containing "document" in OneDrive'
+    },
+    {
+        name: 'Get File by ID',
+        category: 'OneDrive',
+        method: 'GET',
+        url: 'https://graph.microsoft.com/v1.0/me/drive/items/{file-id}',
+        headers: {},
+        body: null,
+        description: 'Get specific file metadata (replace {file-id})'
+    },
+    {
+        name: 'Get Folder Contents',
+        category: 'OneDrive',
+        method: 'GET',
+        url: 'https://graph.microsoft.com/v1.0/me/drive/items/{folder-id}/children',
+        headers: {},
+        body: null,
+        description: 'Get contents of a specific folder (replace {folder-id})'
+    },
+    {
+        name: 'Download File Content',
+        category: 'OneDrive',
+        method: 'GET',
+        url: 'https://graph.microsoft.com/v1.0/me/drive/items/{file-id}/content',
+        headers: {},
+        body: null,
+        description: 'Download file content (replace {file-id})'
+    },
+    {
+        name: 'Get File Thumbnail',
+        category: 'OneDrive',
+        method: 'GET',
+        url: 'https://graph.microsoft.com/v1.0/me/drive/items/{file-id}/thumbnails/0/medium',
+        headers: {},
+        body: null,
+        description: 'Get medium-sized thumbnail of a file (replace {file-id})'
+    },
+    {
+        name: 'Create Folder',
+        category: 'OneDrive',
+        method: 'POST',
+        url: 'https://graph.microsoft.com/v1.0/me/drive/root/children',
+        headers: {},
+        body: {
+            name: "New Folder from API",
+            folder: {},
+            "@microsoft.graph.conflictBehavior": "rename"
+        },
+        description: 'Create a new folder in OneDrive root'
+    },
+    {
+        name: 'Upload Small File',
+        category: 'OneDrive',
+        method: 'PUT',
+        url: 'https://graph.microsoft.com/v1.0/me/drive/root:/test-file.txt:/content',
+        headers: {
+            'Content-Type': 'text/plain'
+        },
+        body: "Hello from Microsoft Graph API! This is test content.",
+        description: 'Upload a small text file to OneDrive root'
+    },
+    {
+        name: 'Get Shared Files',
+        category: 'OneDrive',
+        method: 'GET',
+        url: 'https://graph.microsoft.com/v1.0/me/drive/sharedWithMe',
+        headers: {},
+        body: null,
+        description: 'Get files shared with you'
     }
 ];
 
