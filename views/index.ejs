@@ -35,6 +35,14 @@
                                 <input type="checkbox" id="calendars-readwrite" class="scope-checkbox">
                                 <label for="calendars-readwrite">Calendars.ReadWrite</label>
                             </div>
+                            <div class="scope-item">
+                                <input type="checkbox" id="contacts-read" class="scope-checkbox">
+                                <label for="contacts-read">Contacts.Read</label>
+                            </div>
+                            <div class="scope-item">
+                                <input type="checkbox" id="people-read" class="scope-checkbox">
+                                <label for="people-read">People.Read</label>
+                            </div>
                         </div>
                     </div>
 
@@ -194,6 +202,17 @@
                             <option value="calendar-week">Get Events This Week</option>
                             <option value="calendar-month">Get Events This Month</option>
                             <option value="calendar-create">Create Calendar Event</option>
+                        </optgroup>
+                        <optgroup label="Contacts">
+                            <option value="contacts-list">Get My Contacts</option>
+                            <option value="contacts-search">Search Contacts</option>
+                            <option value="contacts-folders">Get Contact Folders</option>
+                            <option value="contacts-create">Create Contact</option>
+                        </optgroup>
+                        <optgroup label="People">
+                            <option value="people-list">Get People</option>
+                            <option value="people-search">Search People</option>
+                            <option value="people-relevant">Get Relevant People</option>
                         </optgroup>
                         <optgroup label="Microsoft Teams">
                             <option value="teams-joined">Get My Teams</option>

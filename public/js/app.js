@@ -1384,6 +1384,8 @@ function updateCustomScopes() {
             'User.Read': 'https://graph.microsoft.com/User.Read',
             'Calendars.Read': 'https://graph.microsoft.com/Calendars.Read',
             'Calendars.ReadWrite': 'https://graph.microsoft.com/Calendars.ReadWrite',
+            'Contacts.Read': 'https://graph.microsoft.com/Contacts.Read',
+            'People.Read': 'https://graph.microsoft.com/People.Read',
             'Chat.Read': 'https://graph.microsoft.com/Chat.Read',
             'Chat.ReadWrite': 'https://graph.microsoft.com/Chat.ReadWrite',
             'offline_access (Refresh Token)': 'offline_access'
@@ -1865,6 +1867,54 @@ function loadSelectedAPI() {
             }, null, 2)
         },
         
+        // Contacts APIs
+        'contacts-list': {
+            method: 'GET',
+            uri: '/me/contacts?$top=10&$orderby=displayName',
+            body: ''
+        },
+        'contacts-search': {
+            method: 'GET',
+            uri: '/me/contacts?$filter=startswith(displayName,\'John\')',
+            body: ''
+        },
+        'contacts-folders': {
+            method: 'GET',
+            uri: '/me/contactFolders',
+            body: ''
+        },
+        'contacts-create': {
+            method: 'POST',
+            uri: '/me/contacts',
+            body: JSON.stringify({
+                displayName: "Test Contact",
+                givenName: "Test",
+                surname: "Contact",
+                emailAddresses: [{
+                    address: "test@example.com",
+                    name: "Test Contact"
+                }],
+                businessPhones: ["+1 123 456 7890"]
+            }, null, 2)
+        },
+        
+        // People APIs
+        'people-list': {
+            method: 'GET',
+            uri: '/me/people?$top=10',
+            body: ''
+        },
+        'people-search': {
+            method: 'GET',
+            uri: '/me/people?$search="John"&$top=10',
+            body: ''
+        },
+        'people-relevant': {
+            method: 'GET',
+            uri: '/me/people?$filter=personType/class eq \'Person\' and personType/subclass eq \'OrganizationUser\'&$top=10',
+            body: ''
+        },
+        
         // Teams APIs
         'teams-joined': {
             method: 'GET',
@@ -2190,6 +2240,8 @@ function loadSavedConfiguration() {
             'https://graph.microsoft.com/User.Read': 'user-read',
             'https://graph.microsoft.com/Calendars.Read': 'calendars-read',
             'https://graph.microsoft.com/Calendars.ReadWrite': 'calendars-readwrite',
+            'https://graph.microsoft.com/Contacts.Read': 'contacts-read',
+            'https://graph.microsoft.com/People.Read': 'people-read',
             'https://graph.microsoft.com/Chat.Read': 'chat-read',
             'https://graph.microsoft.com/Chat.ReadWrite': 'chat-readwrite'
         };
