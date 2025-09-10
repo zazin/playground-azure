@@ -4,13 +4,17 @@
 
 ## Quick Start
 
-Run instantly with npx:
-
+1. Run the playground:
 ```bash
 npx playground-azure
 ```
 
-Open `http://localhost:3000` in your browser and start testing Microsoft Graph APIs!
+2. Set up ngrok tunnel:
+```bash
+ngrok http 3000 --url=your-custom-domain.ngrok.io
+```
+
+3. Open the ngrok https URL in your browser and start testing Microsoft Graph APIs!
 
 ## Features
 
@@ -36,8 +40,17 @@ npx playground-azure --port=8080
 npx playground-azure --help
 ```
 
-### 2. Configure Azure AD
-1. Open `http://localhost:3000` in your browser
+### 2. Set Up ngrok Tunnel (Required)
+Set up ngrok for OAuth2 callback handling:
+
+1. Install ngrok: https://ngrok.com/download
+2. Start your playground: `npx playground-azure`
+3. In a new terminal, expose port 3000: `ngrok http 3000 --url=your-custom-domain.ngrok.io`
+4. Copy the https URL (e.g., `https://abc123.ngrok.io`)
+5. Update your Azure AD redirect URI to: `https://abc123.ngrok.io/api/auth/callback`
+
+### 3. Configure Azure AD
+1. Open your ngrok https URL in your browser
 2. Go to **Configuration** tab
 3. Enter your Azure AD app credentials:
    - **Client ID** - From your Azure app registration
@@ -45,17 +58,17 @@ npx playground-azure --help
    - **Client Secret** - Generated secret value
 4. Configuration saves automatically ✅
 
-### 3. Select API Scopes
+### 4. Select API Scopes
 - Click quick-add buttons for common scopes
 - Add custom Microsoft Graph scopes
 - All changes auto-save instantly
 
-### 4. Generate Access Token
+### 5. Generate Access Token
 1. Click **"Generate Access Token"**
 2. Sign in with your Microsoft account
 3. Token saves automatically for reuse
 
-### 5. Test APIs
+### 6. Test APIs
 - Try pre-built Microsoft Graph endpoints
 - View formatted JSON responses
 - Copy specific values with built-in buttons
@@ -82,7 +95,7 @@ npx playground-azure --help
 Need an Azure AD app? Here's the quick setup:
 
 1. **Azure Portal** → Azure Active Directory → App registrations → New
-2. **Authentication** → Add redirect URI: `http://localhost:3000/api/auth/callback`
+2. **Authentication** → Add redirect URI: `https://your-ngrok-url.ngrok.io/api/auth/callback`
 3. **API Permissions** → Microsoft Graph → Add permissions you need
 4. **Certificates & secrets** → New client secret → Copy the value
 
