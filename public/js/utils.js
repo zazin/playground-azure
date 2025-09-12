@@ -355,12 +355,16 @@ function applyQueryParameters() {
 
 // Configuration management
 function loadSavedConfiguration() {
+    console.log('📋 === DEBUGGING SCOPE LOADING ===');
     const customScopesInput = document.getElementById('customScopes');
     console.log('📋 Loading saved configuration...');
-    console.log('Custom scopes input value:', customScopesInput ? customScopesInput.value : 'not found');
+    console.log('📋 customScopesInput element:', customScopesInput);
+    console.log('📋 Custom scopes input value:', customScopesInput ? `"${customScopesInput.value}"` : 'not found');
+    console.log('📋 Value length:', customScopesInput ? customScopesInput.value.length : 0);
+    console.log('📋 Value trimmed:', customScopesInput ? `"${customScopesInput.value.trim()}"` : 'n/a');
     
-    if (customScopesInput && customScopesInput.value) {
-        const savedScopes = customScopesInput.value.split(' ');
+    if (customScopesInput && customScopesInput.value.trim()) {
+        const savedScopes = customScopesInput.value.split(' ').filter(s => s.trim());
         console.log('🔍 Found saved scopes:', savedScopes);
         
         // Map of scopes to checkbox IDs
@@ -371,20 +375,28 @@ function loadSavedConfiguration() {
             'https://graph.microsoft.com/Contacts.Read': 'contacts-read',
             'https://graph.microsoft.com/People.Read': 'people-read',
             'https://graph.microsoft.com/Files.Read': 'files-read',
+            'https://graph.microsoft.com/Files.Read.All': 'files-read-all',
+            'https://graph.microsoft.com/Sites.Read.All': 'sites-read-all',
             'https://graph.microsoft.com/Chat.Read': 'chat-read',
             'https://graph.microsoft.com/Chat.ReadWrite': 'chat-readwrite'
         };
         
+        let checkedCount = 0;
+        
         // Check the appropriate checkboxes
         savedScopes.forEach(scope => {
+            console.log('🔄 Processing scope:', scope);
+            
             const checkboxId = scopeToCheckboxMap[scope];
             if (checkboxId) {
                 const checkbox = document.getElementById(checkboxId);
                 if (checkbox) {
+                    console.log('✅ Checking checkbox:', checkboxId);
                     checkbox.checked = true;
+                    checkedCount++;
                     
                     // Also check the parent group checkbox if all items in group are checked
-                    const groupCheckbox = checkbox.closest('.scope-group').querySelector('.scope-group-checkbox');
+                    const groupCheckbox = checkbox.closest('.scope-group')?.querySelector('.scope-group-checkbox');
                     if (groupCheckbox) {
                         const allItemsInGroup = groupCheckbox.closest('.scope-group').querySelectorAll('.scope-checkbox');
                         const checkedItemsInGroup = groupCheckbox.closest('.scope-group').querySelectorAll('.scope-checkbox:checked');
@@ -393,15 +405,27 @@ function loadSavedConfiguration() {
                             groupCheckbox.checked = true;
                         }
                     }
+                } else {
+                    console.log('❌ Checkbox not found for:', checkboxId);
                 }
             } else if (scope === 'offline_access') {
                 // Check offline_access checkbox
                 const offlineAccessCheckbox = document.getElementById('offline-access');
                 if (offlineAccessCheckbox) {
+                    console.log('✅ Checking offline_access checkbox');
                     offlineAccessCheckbox.checked = true;
+                    checkedCount++;
+                } else {
+                    console.log('❌ offline_access checkbox not found');
                 }
+            } else {
+                console.log('⚠️ No checkbox mapping found for scope:', scope);
             }
         });
+        
+        console.log('📊 Total checkboxes checked:', checkedCount, 'out of', savedScopes.length, 'saved scopes');
+    } else {
+        console.log('📋 No saved scopes found or empty value');
     }
 }
 

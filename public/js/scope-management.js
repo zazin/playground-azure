@@ -291,11 +291,14 @@ function toggleScopeGroup(groupId) {
 }
 
 function updateCustomScopes() {
+    console.log('📝 === updateCustomScopes() called ===');
     const selectedScopes = [];
     const scopeCheckboxes = document.querySelectorAll('.scope-checkbox:checked');
+    console.log('📝 Found', scopeCheckboxes.length, 'checked checkboxes');
     
-    scopeCheckboxes.forEach(checkbox => {
+    scopeCheckboxes.forEach((checkbox, index) => {
         const label = checkbox.nextElementSibling.textContent.trim();
+        console.log(`📝 Checkbox ${index + 1}: "${label}" (ID: ${checkbox.id})`);
         // Convert UI labels to actual Microsoft Graph scopes
         const scopeMap = {
             'User.Read': 'https://graph.microsoft.com/User.Read',
@@ -304,6 +307,8 @@ function updateCustomScopes() {
             'Contacts.Read': 'https://graph.microsoft.com/Contacts.Read',
             'People.Read': 'https://graph.microsoft.com/People.Read',
             'Files.Read': 'https://graph.microsoft.com/Files.Read',
+            'Files.Read.All': 'https://graph.microsoft.com/Files.Read.All',
+            'Sites.Read.All': 'https://graph.microsoft.com/Sites.Read.All',
             'Chat.Read': 'https://graph.microsoft.com/Chat.Read',
             'Chat.ReadWrite': 'https://graph.microsoft.com/Chat.ReadWrite',
             'offline_access (Refresh Token)': 'offline_access'
@@ -311,13 +316,205 @@ function updateCustomScopes() {
         
         if (scopeMap[label]) {
             selectedScopes.push(scopeMap[label]);
+            console.log(`📝 Added scope: ${scopeMap[label]}`);
+        } else {
+            console.log(`📝 No mapping found for label: "${label}"`);
         }
     });
     
-    // Update custom scopes input
+    // Get current custom scopes from the hidden input  
     const customScopesInput = document.getElementById('customScopes');
+    const currentValue = customScopesInput ? customScopesInput.value : '';
+    console.log('📝 Current customScopes input value:', `"${currentValue}"`);
+    
+    // Only include custom scopes that don't have checkboxes (true custom scopes)
+    if (customScopesInput && customScopesInput.value) {
+        const existingScopes = customScopesInput.value.split(' ').filter(s => s.trim());
+        const predefinedScopes = [
+            'https://graph.microsoft.com/User.Read',
+            'https://graph.microsoft.com/Calendars.Read', 
+            'https://graph.microsoft.com/Calendars.ReadWrite',
+            'https://graph.microsoft.com/Contacts.Read',
+            'https://graph.microsoft.com/People.Read',
+            'https://graph.microsoft.com/Files.Read',
+            'https://graph.microsoft.com/Files.Read.All',
+            'https://graph.microsoft.com/Sites.Read.All',
+            'https://graph.microsoft.com/Chat.Read',
+            'https://graph.microsoft.com/Chat.ReadWrite',
+            'offline_access'
+        ];
+        
+        // Add only custom scopes that don't have checkboxes
+        existingScopes.forEach(scope => {
+            if (!predefinedScopes.includes(scope) && !selectedScopes.includes(scope)) {
+                console.log('📝 Preserving custom scope:', scope);
+                selectedScopes.push(scope);
+            }
+        });
+    }
+    
+    // Update custom scopes input
+    const finalScopesString = selectedScopes.length > 0 ? selectedScopes.join(' ') : '';
+    console.log('📝 Final scopes to save:', selectedScopes);
+    console.log('📝 Final scopes string:', `"${finalScopesString}"`);
+    
     if (customScopesInput) {
-        customScopesInput.value = selectedScopes.length > 0 ? selectedScopes.join(' ') : '';
+        customScopesInput.value = finalScopesString;
+        console.log('📝 Updated customScopes input to:', `"${customScopesInput.value}"`);
+    }
+    
+    // Update the multiple select display
+    updateSelectedScopesMultiple(selectedScopes);
+    
+    // Auto-save the configuration when scopes change
+    if (typeof autoSaveConfiguration === 'function') {
+        console.log('💾 Triggering auto-save due to scope changes...');
+        autoSaveConfiguration();
+    }
+}
+
+// Update the selected scopes list display
+function updateSelectedScopesMultiple(selectedScopes) {
+    const scopesList = document.getElementById('selectedScopesList');
+    if (!scopesList) return;
+    
+    // Clear existing content
+    scopesList.innerHTML = '';
+    
+    if (selectedScopes.length === 0) {
+        // Show placeholder message when no scopes are selected
+        scopesList.innerHTML = '<p class="text-muted mb-0" style="font-size: 0.85em;"><i class="bi bi-info-circle"></i> No scopes selected</p>';
+        return;
+    }
+    
+    // Create bullet list for selected scopes
+    const ul = document.createElement('ul');
+    ul.className = 'list-unstyled mb-0';
+    
+    selectedScopes.forEach(scope => {
+        const li = document.createElement('li');
+        li.className = 'd-flex justify-content-between align-items-center mb-1';
+        li.innerHTML = `
+            <span class="scope-text">
+                <i class="bi bi-dot text-primary" style="font-size: 0.9em;"></i>
+                <code class="text-primary" style="font-size: 0.8em;">${scope}</code>
+            </span>
+            <button type="button" class="btn btn-outline-danger btn-sm" 
+                    onclick="removeCustomScope('${scope.replace(/'/g, "\\'")}')" 
+                    title="Remove this scope"
+                    style="font-size: 0.75em; padding: 0.1rem 0.3rem;">
+                <i class="bi bi-x"></i>
+            </button>
+        `;
+        ul.appendChild(li);
+    });
+    
+    scopesList.appendChild(ul);
+}
+
+// Handle Enter key press in custom scope input
+function handleCustomScopeKeyPress(event) {
+    if (event.key === 'Enter') {
+        event.preventDefault();
+        addCustomScopeToList();
+    }
+}
+
+// Add custom scope to the list
+function addCustomScopeToList() {
+    const input = document.getElementById('customScopeInput');
+    const customScope = input.value.trim();
+    
+    if (!customScope) {
+        showToast('❌ Please enter a scope', 'warning');
+        return;
+    }
+    
+    // Get current scopes from the hidden input
+    const customScopesInput = document.getElementById('customScopes');
+    const currentScopes = customScopesInput.value ? customScopesInput.value.split(' ') : [];
+    
+    // Check if scope already exists
+    if (currentScopes.includes(customScope)) {
+        showToast('❌ Scope already exists', 'warning');
+        input.value = '';
+        return;
+    }
+    
+    // Add the new scope
+    currentScopes.push(customScope);
+    
+    // Update the hidden input
+    customScopesInput.value = currentScopes.join(' ');
+    
+    // Update the multiple select display
+    updateSelectedScopesMultiple(currentScopes);
+    
+    // Clear the input
+    input.value = '';
+    
+    showToast('✅ Custom scope added: ' + customScope, 'success');
+    
+    // Auto-save if configuration is available
+    if (typeof autoSaveConfiguration === 'function') {
+        autoSaveConfiguration();
+    }
+}
+
+// Remove a custom scope
+function removeCustomScope(scopeToRemove) {
+    // Get current scopes from the hidden input
+    const customScopesInput = document.getElementById('customScopes');
+    const currentScopes = customScopesInput.value ? customScopesInput.value.split(' ') : [];
+    
+    // Remove the scope
+    const filteredScopes = currentScopes.filter(scope => scope !== scopeToRemove);
+    
+    // Update the hidden input
+    customScopesInput.value = filteredScopes.join(' ');
+    
+    // Uncheck corresponding checkbox if it exists
+    const scopeToCheckboxMap = {
+        'https://graph.microsoft.com/User.Read': 'user-read',
+        'https://graph.microsoft.com/Calendars.Read': 'calendars-read',
+        'https://graph.microsoft.com/Calendars.ReadWrite': 'calendars-readwrite',
+        'https://graph.microsoft.com/Contacts.Read': 'contacts-read',
+        'https://graph.microsoft.com/People.Read': 'people-read',
+        'https://graph.microsoft.com/Files.Read': 'files-read',
+        'https://graph.microsoft.com/Files.Read.All': 'files-read-all',
+        'https://graph.microsoft.com/Sites.Read.All': 'sites-read-all',
+        'https://graph.microsoft.com/Chat.Read': 'chat-read',
+        'https://graph.microsoft.com/Chat.ReadWrite': 'chat-readwrite',
+        'offline_access': 'offline-access'
+    };
+    
+    const checkboxId = scopeToCheckboxMap[scopeToRemove];
+    if (checkboxId) {
+        const checkbox = document.getElementById(checkboxId);
+        if (checkbox) {
+            checkbox.checked = false;
+            
+            // Also uncheck parent group checkbox if needed
+            const groupCheckbox = checkbox.closest('.scope-group')?.querySelector('.scope-group-checkbox');
+            if (groupCheckbox) {
+                const allItemsInGroup = groupCheckbox.closest('.scope-group').querySelectorAll('.scope-checkbox');
+                const checkedItemsInGroup = groupCheckbox.closest('.scope-group').querySelectorAll('.scope-checkbox:checked');
+                
+                if (checkedItemsInGroup.length === 0 || checkedItemsInGroup.length < allItemsInGroup.length) {
+                    groupCheckbox.checked = false;
+                }
+            }
+        }
+    }
+    
+    // Update the multiple select display
+    updateSelectedScopesMultiple(filteredScopes);
+    
+    showToast('✅ Scope removed: ' + scopeToRemove, 'success');
+    
+    // Auto-save if configuration is available
+    if (typeof autoSaveConfiguration === 'function') {
+        autoSaveConfiguration();
     }
 }
 
@@ -393,22 +590,28 @@ function autoSaveConfiguration() {
     const clientSecret = document.getElementById('clientSecret')?.value;
     const tenantId = document.getElementById('tenantId')?.value;
     const redirectUri = document.getElementById('redirectUri')?.value;
+    const customScopesInput = document.getElementById('customScopes');
     
     // Only auto-save if we have the basic config
     if (clientId && clientSecret && tenantId && redirectUri) {
+        // Get current scopes from the hidden input
+        const scopesValue = customScopesInput?.value || '';
+        const scopeList = scopesValue ? scopesValue.split(' ').filter(s => s.trim()) : [];
+        const scopes = scopeList.length > 0 ? scopeList : ['https://graph.microsoft.com/.default'];
+        
         const configData = {
             clientId,
             clientSecret,
             tenantId,
             authority: '',
             redirectUri,
-            scopes: currentScopes
+            scopes
         };
         
         axios.post('/api/config', configData)
             .then(response => {
                 if (response.data.success) {
-                    console.log('🔄 Auto-saved scope configuration');
+                    console.log('🔄 Auto-saved scope configuration with', scopes.length, 'scope(s)');
                 }
             })
             .catch(error => {

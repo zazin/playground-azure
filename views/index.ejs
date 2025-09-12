@@ -17,56 +17,87 @@
 
                 <!-- API Scopes List -->
                 <div class="api-scopes">
+                    <!-- User Profile & Identity -->
                     <div class="scope-group">
                         <div class="scope-group-header">
-                            <input type="checkbox" id="graph-apis" class="scope-group-checkbox">
-                            <label for="graph-apis"><strong>Microsoft Graph API v1</strong></label>
+                            <input type="checkbox" id="user-profile-apis" class="scope-group-checkbox">
+                            <label for="user-profile-apis"><strong>User Profile & Identity</strong></label>
                         </div>
                         <div class="scope-items">
                             <div class="scope-item">
-                                <input type="checkbox" id="user-read" class="scope-checkbox">
+                                <input type="checkbox" id="user-read" class="scope-checkbox" onchange="updateCustomScopes()">
                                 <label for="user-read">User.Read</label>
                             </div>
                             <div class="scope-item">
-                                <input type="checkbox" id="calendars-read" class="scope-checkbox">
-                                <label for="calendars-read">Calendars.Read</label>
-                            </div>
-                            <div class="scope-item">
-                                <input type="checkbox" id="calendars-readwrite" class="scope-checkbox">
-                                <label for="calendars-readwrite">Calendars.ReadWrite</label>
-                            </div>
-                            <div class="scope-item">
-                                <input type="checkbox" id="contacts-read" class="scope-checkbox">
-                                <label for="contacts-read">Contacts.Read</label>
-                            </div>
-                            <div class="scope-item">
-                                <input type="checkbox" id="people-read" class="scope-checkbox">
+                                <input type="checkbox" id="people-read" class="scope-checkbox" onchange="updateCustomScopes()">
                                 <label for="people-read">People.Read</label>
                             </div>
                             <div class="scope-item">
-                                <input type="checkbox" id="files-read" class="scope-checkbox">
-                                <label for="files-read">Files.Read</label>
+                                <input type="checkbox" id="contacts-read" class="scope-checkbox" onchange="updateCustomScopes()">
+                                <label for="contacts-read">Contacts.Read</label>
                             </div>
                         </div>
                     </div>
 
+                    <!-- Calendar & Scheduling -->
                     <div class="scope-group">
                         <div class="scope-group-header">
-                            <input type="checkbox" id="teams-apis" class="scope-group-checkbox">
-                            <label for="teams-apis"><strong>Microsoft Teams & Chat API v1</strong></label>
+                            <input type="checkbox" id="calendar-apis" class="scope-group-checkbox">
+                            <label for="calendar-apis"><strong>Calendar & Scheduling</strong></label>
                         </div>
                         <div class="scope-items">
                             <div class="scope-item">
-                                <input type="checkbox" id="chat-read" class="scope-checkbox">
+                                <input type="checkbox" id="calendars-read" class="scope-checkbox" onchange="updateCustomScopes()">
+                                <label for="calendars-read">Calendars.Read</label>
+                            </div>
+                            <div class="scope-item">
+                                <input type="checkbox" id="calendars-readwrite" class="scope-checkbox" onchange="updateCustomScopes()">
+                                <label for="calendars-readwrite">Calendars.ReadWrite</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Files & SharePoint -->
+                    <div class="scope-group">
+                        <div class="scope-group-header">
+                            <input type="checkbox" id="files-apis" class="scope-group-checkbox">
+                            <label for="files-apis"><strong>Files & SharePoint</strong></label>
+                        </div>
+                        <div class="scope-items">
+                            <div class="scope-item">
+                                <input type="checkbox" id="files-read" class="scope-checkbox" onchange="updateCustomScopes()">
+                                <label for="files-read">Files.Read</label>
+                            </div>
+                            <div class="scope-item">
+                                <input type="checkbox" id="files-read-all" class="scope-checkbox" onchange="updateCustomScopes()">
+                                <label for="files-read-all">Files.Read.All</label>
+                            </div>
+                            <div class="scope-item">
+                                <input type="checkbox" id="sites-read-all" class="scope-checkbox" onchange="updateCustomScopes()">
+                                <label for="sites-read-all">Sites.Read.All</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Microsoft Teams & Chat -->
+                    <div class="scope-group">
+                        <div class="scope-group-header">
+                            <input type="checkbox" id="teams-apis" class="scope-group-checkbox">
+                            <label for="teams-apis"><strong>Microsoft Teams & Chat</strong></label>
+                        </div>
+                        <div class="scope-items">
+                            <div class="scope-item">
+                                <input type="checkbox" id="chat-read" class="scope-checkbox" onchange="updateCustomScopes()">
                                 <label for="chat-read">Chat.Read</label>
                             </div>
                             <div class="scope-item">
-                                <input type="checkbox" id="chat-readwrite" class="scope-checkbox">
+                                <input type="checkbox" id="chat-readwrite" class="scope-checkbox" onchange="updateCustomScopes()">
                                 <label for="chat-readwrite">Chat.ReadWrite</label>
                             </div>
                         </div>
                     </div>
                 
+                    <!-- Authentication & Authorization -->
                     <div class="scope-group">
                         <div class="scope-group-header">
                             <input type="checkbox" id="auth-apis" class="scope-group-checkbox">
@@ -74,7 +105,7 @@
                         </div>
                         <div class="scope-items">
                             <div class="scope-item">
-                                <input type="checkbox" id="offline-access" class="scope-checkbox" checked>
+                                <input type="checkbox" id="offline-access" class="scope-checkbox" checked onchange="updateCustomScopes()">
                                 <label for="offline-access">offline_access (Refresh Token)</label>
                             </div>
                         </div>
@@ -83,6 +114,34 @@
 
                 <!-- Hidden input for scopes (populated by checkboxes) -->
                 <input type="hidden" id="customScopes" value="<%= (config.scopes && config.scopes.length > 0) ? config.scopes.join(' ') : '' %>">
+
+                <!-- Selected Scopes Display -->
+                <div class="selected-scopes-section mb-3">
+                    <label class="form-label">Selected Scopes</label>
+                    <div id="selectedScopesList" class="selected-scopes-list p-3 border rounded bg-light" style="min-height: 100px;">
+                        <!-- Selected scopes will be populated here by JavaScript -->
+                        <p class="text-muted mb-0"><i class="bi bi-info-circle"></i> No scopes selected</p>
+                    </div>
+                    <div class="form-text mb-2">
+                        <i class="bi bi-info-circle"></i> The scopes you select above will appear here. You can also add custom scopes below.
+                    </div>
+                    
+                    <!-- Custom Scope Input -->
+                    <div class="input-group input-group-sm">
+                        <input type="text" id="customScopeInput" class="form-control form-control-sm" 
+                               placeholder="Add custom scope (e.g., https://graph.microsoft.com/Mail.Read)" 
+                               onkeypress="handleCustomScopeKeyPress(event)">
+                        <button class="btn btn-outline-primary btn-sm" type="button" onclick="addCustomScopeToList()">
+                            <i class="bi bi-plus-circle"></i> Add
+                        </button>
+                    </div>
+                    <div class="form-text">
+                        <small class="text-muted">
+                            Press Enter or click "Add Scope" to add a custom scope. 
+                            Common format: https://graph.microsoft.com/[Permission]. Click the × next to any scope to remove it.
+                        </small>
+                    </div>
+                </div>
 
                 <!-- Configuration Fields -->
                 <div class="config-section">

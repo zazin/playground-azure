@@ -2,6 +2,33 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.2.0] - 2025-01-12
+
+### Added
+- Enhanced scope selection UI with categorized groups:
+  - User Profile & Identity
+  - Calendar & Scheduling  
+  - Files & SharePoint
+  - Microsoft Teams & Chat
+  - Authentication & Authorization
+- Selected scopes display with bullet list format
+- Custom scope input functionality with Enter key support
+- Individual scope removal with × buttons
+- Files.Read.All and Sites.Read.All scopes support
+
+### Enhanced
+- Automatic scope persistence - saves on check/uncheck
+- Real-time scope updates in selected scopes list
+- Comprehensive debugging for scope loading
+- Improved scope management with auto-save triggers
+- Better error handling and user feedback
+
+### Fixed
+- Scope persistence across page refreshes
+- Checkbox state restoration from saved configuration
+- Group checkbox synchronization
+- Auto-save functionality for all scope changes
+
 ## [1.1.0] - 2025-01-10
 
 ### Added
