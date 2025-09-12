@@ -3,9 +3,6 @@ name: Publish to NPM
 on:
   release:
     types: [published]
-  push:
-    tags:
-      - 'v*'
 
 jobs:
   publish:
@@ -37,7 +34,20 @@ jobs:
         run: npm pack --dry-run
 
       - name: Publish to NPM
-        run: npm publish --provenance --access public
+        run: |
+          # Try to publish with retries for 409 conflicts
+          for i in {1..3}; do
+            if npm publish --provenance --access public; then
+              echo "✅ Successfully published to NPM"
+              break
+            elif [ $i -lt 3 ]; then
+              echo "⚠️ Publish attempt $i failed, retrying in 30 seconds..."
+              sleep 30
+            else
+              echo "❌ All publish attempts failed"
+              exit 1
+            fi
+          done
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
